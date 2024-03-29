@@ -1,18 +1,10 @@
 package com.szymonharabasz.complexsystems.ui;
 
-import jakarta.inject.Inject;
-
-import com.github.appreciated.apexcharts.ApexCharts;
-import com.github.appreciated.apexcharts.ApexChartsBuilder;
-import com.github.appreciated.apexcharts.config.Chart;
-import com.github.appreciated.apexcharts.config.DataLabels;
-import com.github.appreciated.apexcharts.config.Grid;
-import com.github.appreciated.apexcharts.config.Stroke;
-import com.github.appreciated.apexcharts.config.chart.Type;
-import com.github.appreciated.apexcharts.config.chart.Zoom;
-import com.github.appreciated.apexcharts.config.stroke.Curve;
-import com.github.appreciated.apexcharts.examples.line.LineChartExample;
-import com.github.appreciated.apexcharts.helper.Series;
+import com.github.appreciated.apexcharts.config.builder.PlotOptionsBuilder;
+import com.github.appreciated.apexcharts.config.builder.XAxisBuilder;
+import com.szymonharabasz.complexsystems.moleculardynamics.HarmonicOscillatorProperties;
+import com.szymonharabasz.complexsystems.moleculardynamics.HarmonicOscillatorService;
+import com.szymonharabasz.complexsystems.moleculardynamics.PhaseSpacePoint;
 import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -27,18 +19,19 @@ import com.vaadin.flow.router.Route;
 @Route("")
 public class MainView extends VerticalLayout {
 
-    @Inject
-    GreetService greetService;
+    transient HarmonicOscillatorService harmonicOscillatorService;
 
-    public MainView() {
+    public MainView(HarmonicOscillatorService harmonicOscillatorService) {
+        this.harmonicOscillatorService = harmonicOscillatorService;
+
         // Use TextField for standard text input
         TextField textField = new TextField("Your name");
         textField.addThemeName("bordered");
 
         // Button click listeners can be defined as lambda expressions
-        Button button = new Button("Say hello", e -> {
-            add(new Paragraph(greetService.greet(textField.getValue())));
-        });
+        Button button = new Button("Say hello", e -> 
+            add(new Paragraph("hello"))
+        );
 
         // Theme variants give you predefined extra styles for components.
         // Example: Primary button is more prominent look.
@@ -50,7 +43,31 @@ public class MainView extends VerticalLayout {
 
         // Use custom CSS classes to apply styling. This is defined in shared-styles.css.
         addClassName("centered-content");
-        
-        add(new LineChartExample().build());
+
+        double m = 0.1;
+        double k = 5.0;
+        double x0 = 0.1;
+        double v0 = 0.0;
+        var props = new HarmonicOscillatorProperties(m, k, x0, v0);
+        double a = props.amplitude();
+        double period = props.period();
+        double tMax = 4 * period;
+        double dt = 0.02;
+        var n = Math.round(tMax / dt);
+        Double[] ys = harmonicOscillatorService.analytic(m, k, x0, v0, dt)
+            .limit(n)
+            .map(PhaseSpacePoint::x)
+            .map(x -> x / a)
+            .toArray(Double[]::new);
+        Double[] xs = harmonicOscillatorService.xs(dt)
+            .limit(n)
+            .map(t -> t / period)
+            .toArray(Double[]::new);
+
+        var chart = new LineChart(xs, ys).build();
+        add(chart);
+        chart.render();
+        // chart.setPlotOptions(PlotOptionsBuilder.get()
+        //     .withXaxis(XAxisBuilder.get()));
     }
 }

@@ -1,7 +1,11 @@
 package com.szymonharabasz.complexsystems.ui;
 
-import com.github.appreciated.apexcharts.config.builder.PlotOptionsBuilder;
-import com.github.appreciated.apexcharts.config.builder.XAxisBuilder;
+import java.util.ArrayList;
+import java.util.function.Consumer;
+
+import com.github.appreciated.apexcharts.ApexCharts;
+import com.github.appreciated.apexcharts.helper.Series;
+import com.szymonharabasz.complexsystems.common.LabelledData;
 import com.szymonharabasz.complexsystems.moleculardynamics.HarmonicOscillatorProperties;
 import com.szymonharabasz.complexsystems.moleculardynamics.HarmonicOscillatorService;
 import com.szymonharabasz.complexsystems.moleculardynamics.PhaseSpacePoint;
@@ -9,7 +13,9 @@ import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.Paragraph;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.Route;
 
@@ -20,6 +26,13 @@ import com.vaadin.flow.router.Route;
 public class MainView extends VerticalLayout {
 
     transient HarmonicOscillatorService harmonicOscillatorService;
+
+    private double dtMilis = 1.0;
+    private double m = 0.1;
+    private double k = 5.0;
+    private double x0 = 0.1;
+    private double v0 = 0.0;
+    private ApexCharts chart;
 
     public MainView(HarmonicOscillatorService harmonicOscillatorService) {
         this.harmonicOscillatorService = harmonicOscillatorService;
@@ -43,18 +56,28 @@ public class MainView extends VerticalLayout {
 
         // Use custom CSS classes to apply styling. This is defined in shared-styles.css.
         addClassName("centered-content");
+        
+        addNumberField(x -> dtMilis = x, "Time Step", "ms", 0.1, 20.0, 0.1, dtMilis);
+        addNumberField(x -> m = x, "Mass", "kg", 0.1, 10.0, 0.1, m);
+        addNumberField(x -> k = x, "Rigidity", "N/m", 0.1, 10.0, 0.1, k);
+        addNumberField(x -> x0 = x, "Initial position", "m", -10.0, 10.0, 0.1, x0);
+        addNumberField(x -> v0 = x, "Initial velocity", "m/s", -10.0, 10.0, 0.1, v0);
 
-        double m = 0.1;
-        double k = 5.0;
-        double x0 = 0.1;
-        double v0 = 0.0;
+        chart = new LineChart().build();
+        add(chart);
+
+        updateChartData();
+    }
+
+    private void updateChartData() {
+
         var props = new HarmonicOscillatorProperties(m, k, x0, v0);
         double a = props.amplitude();
         double period = props.period();
         double tMax = 4 * period;
-        double dt = 0.02;
+        double dt = dtMilis / 1000;
         var n = Math.round(tMax / dt);
-        Double[] ys = harmonicOscillatorService.analytic(m, k, x0, v0, dt)
+        Double[] analytic = harmonicOscillatorService.analytic(m, k, x0, v0, dt)
             .limit(n)
             .map(PhaseSpacePoint::x)
             .map(x -> x / a)
@@ -63,11 +86,85 @@ public class MainView extends VerticalLayout {
             .limit(n)
             .map(t -> t / period)
             .toArray(Double[]::new);
+        Double[] euler = harmonicOscillatorService.euler(m, k, x0, v0, dt)
+            .limit(n)
+            .map(PhaseSpacePoint::x)
+            .map(x -> x / a)
+            .toArray(Double[]::new);
+        Double[] leapfrog = harmonicOscillatorService.leapfrog(m, k, x0, v0, dt)
+            .limit(n)
+            .map(PhaseSpacePoint::x)
+            .map(x -> x / a)
+            .toArray(Double[]::new);
 
-        var chart = new LineChart(xs, ys).build();
-        add(chart);
-       // chart.render();
-        // chart.setPlotOptions(PlotOptionsBuilder.get()
-        //     .withXaxis(XAxisBuilder.get()));
+        if (chart != null) {
+            chart.updateSeries(
+                makeSeries(xs, new LabelledData("Analytic", analytic)),
+                makeSeries(xs, new LabelledData("Euler", euler)),
+                makeSeries(xs, new LabelledData("Leap Frog", leapfrog))
+            );
+        }
+
+    }
+
+    private void addTimeStepField() {
+        NumberField numberField = new NumberField(event -> {
+            dtMilis = event.getValue();
+            updateChartData();
+        });
+        numberField.setLabel("Time step");
+        numberField.setMin(0.1);
+        numberField.setMax(20);
+        numberField.setStep(0.1);
+        numberField.setValue(dtMilis);
+        numberField.setStepButtonsVisible(true);
+        numberField.setSuffixComponent(new Span("ms"));
+
+        add(numberField);
+    }
+
+    private void addMassField() {
+        NumberField numberField = new NumberField(event -> {
+            m = event.getValue();
+            updateChartData();
+        });
+        numberField.setLabel("Mass");
+        numberField.setMin(0.1);
+        numberField.setMax(10);
+        numberField.setStep(0.1);
+        numberField.setValue(m);
+        numberField.setStepButtonsVisible(true);
+        numberField.setSuffixComponent(new Span("kg"));
+
+        add(numberField);
+    }
+
+    private void addNumberField(
+        Consumer<Double> fieldSetter, String label, String unit,
+        double min, double max, double step, double initValue)
+      {
+        NumberField numberField = new NumberField(event -> {
+            fieldSetter.accept(event.getValue());
+            updateChartData();
+        });
+        numberField.setLabel(label);
+        numberField.setMin(min);
+        numberField.setMax(max);
+        numberField.setStep(step);
+        numberField.setValue(initValue);
+        numberField.setStepButtonsVisible(true);
+        numberField.setSuffixComponent(new Span(unit));
+    
+        add(numberField);
+    }
+
+    private Series<Object[]> makeSeries(Double[] xs, LabelledData labelledData) {
+        var data = new ArrayList<Double[]>();
+        for (int i = 0; i < Math.min(xs.length, labelledData.data().length); ++i) {
+                data.add(new Double[] {xs[i], labelledData.data()[i]});
+        }
+        Object[][] arr = data.toArray(Object[][]::new);
+
+        return new Series<>(labelledData.label(), arr);
     }
 }

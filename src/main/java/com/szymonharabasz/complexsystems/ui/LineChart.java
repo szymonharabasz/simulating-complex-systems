@@ -11,6 +11,7 @@ import com.github.appreciated.apexcharts.config.grid.builder.RowBuilder;
 import com.github.appreciated.apexcharts.config.stroke.Curve;
 import com.github.appreciated.apexcharts.config.xaxis.TickPlacement;
 import com.github.appreciated.apexcharts.config.xaxis.XAxisType;
+import com.github.appreciated.apexcharts.config.xaxis.builder.AxisTicksBuilder;
 import com.github.appreciated.apexcharts.config.xaxis.builder.TitleBuilder;
 import com.github.appreciated.apexcharts.helper.Series;
 
@@ -34,10 +35,11 @@ public class LineChart extends ApexChartsBuilder {
                         .withTitle(TitleBuilder.get()
                                 .withText("t / T")
                                 .build())
-                        .withTickPlacement(TickPlacement.ON)
+                       // .withTickPlacement(TickPlacement.ON)
                         .withMin(0.0)
                         .withMax(4.0)
-                        .withTickAmount(new BigDecimal(4))
+                        .withTickAmount(new BigDecimal(8))
+                        .withType(XAxisType.NUMERIC)
                         .build())
                 .withYaxis(YAxisBuilder.get()
                         .withMin(-2)
@@ -59,6 +61,7 @@ public class LineChart extends ApexChartsBuilder {
                 data.add(new Double[] {xs[i], ys[i]});
         }
         Object[][] arr = data.toArray(Object[][]::new);
+
         return new Series<>(name, arr);
     }
 }

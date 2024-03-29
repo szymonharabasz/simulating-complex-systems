@@ -66,7 +66,7 @@ public class MainView extends VerticalLayout {
 
         var chart = new LineChart(xs, ys).build();
         add(chart);
-        chart.render();
+       // chart.render();
         // chart.setPlotOptions(PlotOptionsBuilder.get()
         //     .withXaxis(XAxisBuilder.get()));
     }

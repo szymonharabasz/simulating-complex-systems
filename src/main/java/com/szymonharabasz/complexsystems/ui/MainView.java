@@ -37,6 +37,7 @@ public class MainView extends VerticalLayout {
     private double k = 5.0;
     private double x0 = 0.1;
     private double v0 = 0.0;
+    private double b = 1.1;
     private ApexCharts trajectoryChart;
     private ApexCharts totalEnergyChart;
 
@@ -69,6 +70,7 @@ public class MainView extends VerticalLayout {
         oscilatorSettings.add(makNumberField(x -> k = x, "Rigidity", "N/m", 0.1, 10.0, 0.1, k));
         oscilatorSettings.add(makNumberField(x -> x0 = x, "Initial position", "m", -10.0, 10.0, 0.1, x0));
         oscilatorSettings.add(makNumberField(x -> v0 = x, "Initial velocity", "m/s", -10.0, 10.0, 0.1, v0));
+        oscilatorSettings.add(makNumberField(x -> b = x, "Damping", "2sqrt(mk)", 0.0, 2.0, 0.1, b));
         add(oscilatorSettings);
 
         HorizontalLayout plots = new HorizontalLayout();
@@ -88,17 +90,17 @@ public class MainView extends VerticalLayout {
 
     private void updateChartData() {
 
-        var props = new HarmonicOscillatorProperties(m, k, x0, v0);
+        var props = new HarmonicOscillatorProperties(m, k, b, x0, v0);
         double a = props.amplitude();
         double period = props.period();
         double tMax = 4 * period;
         double dt = dtMilis / 1000;
         var n = Math.round(tMax / dt);
-        var analyticStream = harmonicOscillatorService.analytic(m, k, x0, v0, dt);
-        var eulerStream = harmonicOscillatorService.euler(m, k, x0, v0, dt);
-        var leapfrogStream = harmonicOscillatorService.leapfrog(m, k, x0, v0, dt);
+        var analyticStream = harmonicOscillatorService.analytic(props, dt);
+        var eulerStream = harmonicOscillatorService.euler(props, dt);
+        var leapfrogStream = harmonicOscillatorService.leapfrog(props, dt);
 
-        Double totE = harmonicOscillatorService.totalEnergy(m, k, x0, v0);
+        Double totE = harmonicOscillatorService.totalEnergy(props);
         Double[][] analytic = extractTrend(analyticStream, n, x -> x / a, e -> e / totE);
         Double[][] euler = extractTrend(eulerStream, n, x -> x / a, e -> e / totE);
         Double[][] leapfrog = extractTrend(leapfrogStream, n, x -> x / a, e -> e / totE);

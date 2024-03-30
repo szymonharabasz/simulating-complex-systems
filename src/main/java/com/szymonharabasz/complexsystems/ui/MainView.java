@@ -2,6 +2,9 @@ package com.szymonharabasz.complexsystems.ui;
 
 import java.util.ArrayList;
 import java.util.function.DoubleConsumer;
+import java.util.function.UnaryOperator;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.github.appreciated.apexcharts.ApexCharts;
 import com.github.appreciated.apexcharts.helper.Series;
@@ -10,10 +13,12 @@ import com.szymonharabasz.complexsystems.moleculardynamics.HarmonicOscillatorPro
 import com.szymonharabasz.complexsystems.moleculardynamics.HarmonicOscillatorService;
 import com.szymonharabasz.complexsystems.moleculardynamics.PhaseSpacePoint;
 import com.vaadin.flow.component.Key;
+import com.vaadin.flow.component.Unit;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.component.textfield.TextField;
@@ -27,12 +32,13 @@ public class MainView extends VerticalLayout {
 
     transient HarmonicOscillatorService harmonicOscillatorService;
 
-    private double dtMilis = 1.0;
+    private double dtMilis = 5.0;
     private double m = 0.1;
     private double k = 5.0;
     private double x0 = 0.1;
     private double v0 = 0.0;
-    private ApexCharts chart;
+    private ApexCharts trajectoryChart;
+    private ApexCharts totalEnergyChart;
 
     public MainView(HarmonicOscillatorService harmonicOscillatorService) {
         this.harmonicOscillatorService = harmonicOscillatorService;
@@ -57,14 +63,25 @@ public class MainView extends VerticalLayout {
         // Use custom CSS classes to apply styling. This is defined in shared-styles.css.
         addClassName("centered-content");
         
-        addNumberField(x -> dtMilis = x, "Time Step", "ms", 0.1, 20.0, 0.1, dtMilis);
-        addNumberField(x -> m = x, "Mass", "kg", 0.1, 10.0, 0.1, m);
-        addNumberField(x -> k = x, "Rigidity", "N/m", 0.1, 10.0, 0.1, k);
-        addNumberField(x -> x0 = x, "Initial position", "m", -10.0, 10.0, 0.1, x0);
-        addNumberField(x -> v0 = x, "Initial velocity", "m/s", -10.0, 10.0, 0.1, v0);
+        HorizontalLayout oscilatorSettings = new HorizontalLayout();
+        oscilatorSettings.add(makNumberField(x -> dtMilis = x, "Time Step", "ms", 0.1, 20.0, 0.1, dtMilis));
+        oscilatorSettings.add(makNumberField(x -> m = x, "Mass", "kg", 0.1, 10.0, 0.1, m));
+        oscilatorSettings.add(makNumberField(x -> k = x, "Rigidity", "N/m", 0.1, 10.0, 0.1, k));
+        oscilatorSettings.add(makNumberField(x -> x0 = x, "Initial position", "m", -10.0, 10.0, 0.1, x0));
+        oscilatorSettings.add(makNumberField(x -> v0 = x, "Initial velocity", "m/s", -10.0, 10.0, 0.1, v0));
+        add(oscilatorSettings);
 
-        chart = new LineChart().build();
-        add(chart);
+        HorizontalLayout plots = new HorizontalLayout();
+        plots.setAlignItems(Alignment.STRETCH);
+        trajectoryChart = new LineChart(-2.0, 2.0, "x(t) / T").build();
+        trajectoryChart.setHeight(300f,  Unit.PERCENTAGE);
+        trajectoryChart.setWidth(275f,  Unit.PERCENTAGE);
+        plots.add(trajectoryChart);
+        totalEnergyChart = new LineChart(0.0, 2.0, "E / E0").build();
+        totalEnergyChart.setHeight(300f,  Unit.PERCENTAGE);
+        totalEnergyChart.setWidth(200f,  Unit.PERCENTAGE);
+        plots.add(totalEnergyChart);
+        add(plots);
 
         updateChartData();
     }
@@ -77,37 +94,52 @@ public class MainView extends VerticalLayout {
         double tMax = 4 * period;
         double dt = dtMilis / 1000;
         var n = Math.round(tMax / dt);
-        Double[] analytic = harmonicOscillatorService.analytic(m, k, x0, v0, dt)
-            .limit(n)
-            .map(PhaseSpacePoint::x)
-            .map(x -> x / a)
-            .toArray(Double[]::new);
+        var analyticStream = harmonicOscillatorService.analytic(m, k, x0, v0, dt);
+        var eulerStream = harmonicOscillatorService.euler(m, k, x0, v0, dt);
+        var leapfrogStream = harmonicOscillatorService.leapfrog(m, k, x0, v0, dt);
+
+        Double totE = harmonicOscillatorService.totalEnergy(m, k, x0, v0);
+        Double[][] analytic = extractTrend(analyticStream, n, x -> x / a, e -> e / totE);
+        Double[][] euler = extractTrend(eulerStream, n, x -> x / a, e -> e / totE);
+        Double[][] leapfrog = extractTrend(leapfrogStream, n, x -> x / a, e -> e / totE);
+
         Double[] xs = harmonicOscillatorService.xs(dt)
             .limit(n)
             .map(t -> t / period)
             .toArray(Double[]::new);
-        Double[] euler = harmonicOscillatorService.euler(m, k, x0, v0, dt)
-            .limit(n)
-            .map(PhaseSpacePoint::x)
-            .map(x -> x / a)
-            .toArray(Double[]::new);
-        Double[] leapfrog = harmonicOscillatorService.leapfrog(m, k, x0, v0, dt)
-            .limit(n)
-            .map(PhaseSpacePoint::x)
-            .map(x -> x / a)
-            .toArray(Double[]::new);
 
-        if (chart != null) {
-            chart.updateSeries(
-                makeSeries(xs, new LabelledData("Analytic", analytic)),
-                makeSeries(xs, new LabelledData("Euler", euler)),
-                makeSeries(xs, new LabelledData("Leap Frog", leapfrog))
+        if (trajectoryChart != null) {
+            trajectoryChart.updateSeries(
+                makeSeries(xs, new LabelledData("Analytic", analytic[0])),
+                makeSeries(xs, new LabelledData("Euler", euler[0])),
+                makeSeries(xs, new LabelledData("Leap Frog", leapfrog[0]))
+            );
+        }
+
+        if (totalEnergyChart != null) {
+            totalEnergyChart.updateSeries(
+                makeSeries(xs, new LabelledData("Analytic", analytic[1])),
+                makeSeries(xs, new LabelledData("Euler", euler[1])),
+                makeSeries(xs, new LabelledData("Leap Frog", leapfrog[1]))
             );
         }
 
     }
 
-    private void addNumberField(
+    private Double[][] extractTrend(
+        Stream<PhaseSpacePoint> stream, long length, UnaryOperator<Double> scaling1, UnaryOperator<Double> scaling2
+    ) {
+        return stream.limit(length).collect(Collectors.teeing(
+            Collectors.mapping(PhaseSpacePoint::x, Collectors.mapping(scaling1, Collectors.toList())),
+            Collectors.mapping(PhaseSpacePoint::energy, Collectors.mapping(scaling2, Collectors.toList())),
+            (res1, res2) -> new Double[][]{
+                    res1.toArray(Double[]::new),
+                    res2.toArray(Double[]::new)
+                }
+        ));
+    }
+
+    private NumberField makNumberField(
         DoubleConsumer fieldSetter, String label, String unit,
         double min, double max, double step, double initValue)
       {
@@ -123,7 +155,7 @@ public class MainView extends VerticalLayout {
         numberField.setStepButtonsVisible(true);
         numberField.setSuffixComponent(new Span(unit));
     
-        add(numberField);
+        return numberField;
     }
 
     private Series<Object[]> makeSeries(Double[] xs, LabelledData labelledData) {

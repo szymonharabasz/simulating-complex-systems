@@ -12,7 +12,7 @@ import com.github.appreciated.apexcharts.config.xaxis.XAxisType;
 import com.github.appreciated.apexcharts.config.xaxis.builder.TitleBuilder;
 
 public class LineChart extends ApexChartsBuilder {
-    public LineChart() {
+    public LineChart(double minY, double maxY, String titleY) {
         withChart(ChartBuilder.get()
                 .withType(Type.LINE)
                 .withZoom(ZoomBuilder.get()
@@ -37,10 +37,10 @@ public class LineChart extends ApexChartsBuilder {
                         .withType(XAxisType.NUMERIC)
                         .build())
                 .withYaxis(YAxisBuilder.get()
-                        .withMin(-2)
-                        .withMax(2)
+                        .withMin(minY)
+                        .withMax(maxY)
                         .withTitle(com.github.appreciated.apexcharts.config.yaxis.builder.TitleBuilder.get()
-                                .withText("x(t) / A")
+                                .withText(titleY)
                                 .build())
                         .withForceNiceScale(true)
                         .withDecimalsInFloat(2.5)

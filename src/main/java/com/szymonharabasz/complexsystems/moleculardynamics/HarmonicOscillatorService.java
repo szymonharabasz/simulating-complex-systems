@@ -14,8 +14,8 @@ public class HarmonicOscillatorService {
         var omega = oscillator.omega();
         var phi = oscillator.phi();
         return xs(dt).map(t -> new PhaseSpacePoint(
-                a * Math.cos(omega * t + phi),
-                -omega * a * Math.sin(omega * t + phi)));
+                a * Math.cos(omega * t - phi),
+                -omega * a * Math.sin(omega * t - phi)));
     }
 
     public Stream<PhaseSpacePoint> euler(

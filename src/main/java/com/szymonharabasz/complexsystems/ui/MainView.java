@@ -1,7 +1,7 @@
 package com.szymonharabasz.complexsystems.ui;
 
 import java.util.ArrayList;
-import java.util.function.Consumer;
+import java.util.function.DoubleConsumer;
 
 import com.github.appreciated.apexcharts.ApexCharts;
 import com.github.appreciated.apexcharts.helper.Series;
@@ -107,40 +107,8 @@ public class MainView extends VerticalLayout {
 
     }
 
-    private void addTimeStepField() {
-        NumberField numberField = new NumberField(event -> {
-            dtMilis = event.getValue();
-            updateChartData();
-        });
-        numberField.setLabel("Time step");
-        numberField.setMin(0.1);
-        numberField.setMax(20);
-        numberField.setStep(0.1);
-        numberField.setValue(dtMilis);
-        numberField.setStepButtonsVisible(true);
-        numberField.setSuffixComponent(new Span("ms"));
-
-        add(numberField);
-    }
-
-    private void addMassField() {
-        NumberField numberField = new NumberField(event -> {
-            m = event.getValue();
-            updateChartData();
-        });
-        numberField.setLabel("Mass");
-        numberField.setMin(0.1);
-        numberField.setMax(10);
-        numberField.setStep(0.1);
-        numberField.setValue(m);
-        numberField.setStepButtonsVisible(true);
-        numberField.setSuffixComponent(new Span("kg"));
-
-        add(numberField);
-    }
-
     private void addNumberField(
-        Consumer<Double> fieldSetter, String label, String unit,
+        DoubleConsumer fieldSetter, String label, String unit,
         double min, double max, double step, double initValue)
       {
         NumberField numberField = new NumberField(event -> {

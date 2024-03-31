@@ -12,27 +12,26 @@ public class HarmonicOscillatorService {
     public Stream<PhaseSpacePoint> analytic(
         HarmonicOscillatorProperties oscillator, double dt
     ) {
-        var a = oscillator.amplitude();
         var omega = oscillator.omega();
         var phi = oscillator.phi();
         var b2m = oscillator.b2m();
         return xs(dt).map(t -> {
             if (Math.abs(oscillator.b() - 1.0) < SMALL ) {
-                var a1 = oscillator.r0();
-                var a2 = oscillator.v0() + b2m * oscillator.r0();
+                var a1 = 1.;//oscillator.r0();
+                var a2 = (oscillator.v0() + b2m * oscillator.r0())/oscillator.r0();
                 var x = (a1 + a2*t) * Math.exp(-b2m * t);
                 var v = (a2 - b2m * (a1 + a2*t)) * Math.exp(-b2m * t);
                 return new PhaseSpacePoint(x, v, totalEnergy(oscillator.m(), oscillator.k(), x, v));
             } else if (oscillator.b() < 1.0) {
-                var x = a * Math.exp(-b2m * t) * Math.cos(omega * t - phi);
-                var v = -a * Math.exp(-b2m * t) * (b2m * Math.cos(omega * t - phi) + omega * Math.sin(omega * t - phi));
+                var x = Math.exp(-b2m * t) * Math.cos(omega * t - phi);
+                var v = -Math.exp(-b2m * t) * (b2m * Math.cos(omega * t - phi) + omega * Math.sin(omega * t - phi));
                 return new PhaseSpacePoint(x, v, totalEnergy(oscillator.m(), oscillator.k(), x, v));
             } else {
                 var delta = b2m * b2m - oscillator.k() / oscillator.m();
                 var l1 = -b2m + Math.sqrt(delta);
                 var l2 = -b2m - Math.sqrt(delta);
-                var a1 = 0.5 * (oscillator.r0() + (oscillator.v0() + b2m * oscillator.r0())/Math.sqrt(delta));
-                var a2 = 0.5 * (oscillator.r0() - (oscillator.v0() + b2m * oscillator.r0())/Math.sqrt(delta));
+                var a1 = 0.5 * (1.0 + (oscillator.v0() + b2m * oscillator.r0())/Math.sqrt(delta)/oscillator.r0());
+                var a2 = 0.5 * (1.0 - (oscillator.v0() + b2m * oscillator.r0())/Math.sqrt(delta)/oscillator.r0());
                 var x = a1 * Math.exp(l1 * t) + a2 * Math.exp(l2 * t);
                 var v = l1 * a1 * Math.exp(l1 * t) + l2 * a2 * Math.exp(l2 * t);
                 return new PhaseSpacePoint(x, v, totalEnergy(oscillator.m(), oscillator.k(), x, v));

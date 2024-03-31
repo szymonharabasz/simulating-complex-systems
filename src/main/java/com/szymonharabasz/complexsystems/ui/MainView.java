@@ -32,7 +32,7 @@ public class MainView extends VerticalLayout {
 
     transient HarmonicOscillatorService harmonicOscillatorService;
 
-    private double dtMilis = 5.0;
+    private double dtMilis = 15.0;
     private double m = 0.1;
     private double k = 5.0;
     private double x0 = 0.1;
@@ -109,14 +109,16 @@ public class MainView extends VerticalLayout {
         var leapfrogStream = harmonicOscillatorService.leapfrog(props, dt);
 
         Double totE = harmonicOscillatorService.totalEnergy(props);
-        Double[][] analytic = extractTrend(analyticStream, n, x -> x / a, e -> e / totE);
+        Double[][] analytic = extractTrend(analyticStream, n, x -> x, e -> e / (totE / (a*a)));
         Double[][] euler = extractTrend(eulerStream, n, x -> x / a, e -> e / totE);
         Double[][] leapfrog = extractTrend(leapfrogStream, n, x -> x / a, e -> e / totE);
 
-        System.out.println("***");
-        for (var i = 0; i < analytic[0].length; ++i) {
-            System.out.println("" + analytic[0][i] + " " + euler[0][i] + " " + leapfrog[0][i]);
-        }
+        System.out.println("TOTE " + totE + " A " + a * a);
+
+        // System.out.println("***");
+        // for (var i = 0; i < analytic[0].length; ++i) {
+        //     System.out.println("" + analytic[0][i] + " " + euler[0][i] + " " + leapfrog[0][i]);
+        // }
 
         Double[] xs = harmonicOscillatorService.xs(dt)
             .limit(n)

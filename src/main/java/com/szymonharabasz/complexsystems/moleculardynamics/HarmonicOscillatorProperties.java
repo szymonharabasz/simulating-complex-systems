@@ -4,7 +4,7 @@ public record HarmonicOscillatorProperties(double m, double k, double b, double 
     public double omega() { return Math.sqrt(k/m - Math.pow(b2m(), 2)); }
     public double amplitude() { 
         if (Double.isNaN(omega())) {
-            return Math.hypot(r0, (v0 + b2m() *r0)/Math.sqrt(-k/m + Math.pow(b2m(), 2))); 
+            return r0; 
         }
         return Math.hypot(r0, (v0 + b2m() *r0)/omega()); 
     }

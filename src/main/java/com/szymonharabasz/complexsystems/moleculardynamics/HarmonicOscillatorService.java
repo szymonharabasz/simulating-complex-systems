@@ -7,7 +7,7 @@ import jakarta.enterprise.context.Dependent;
 @Dependent
 public class HarmonicOscillatorService {
 
-    private final double small = 1e-6;
+    private static final double SMALL = 1e-6;
 
     public Stream<PhaseSpacePoint> analytic(
         HarmonicOscillatorProperties oscillator, double dt
@@ -17,7 +17,7 @@ public class HarmonicOscillatorService {
         var phi = oscillator.phi();
         var b2m = oscillator.b2m();
         return xs(dt).map(t -> {
-            if (Math.abs(oscillator.b() - 1.0) < small ) {
+            if (Math.abs(oscillator.b() - 1.0) < SMALL ) {
                 var a1 = oscillator.r0();
                 var a2 = oscillator.v0() + b2m * oscillator.r0();
                 var x = (a1 + a2*t) * Math.exp(-b2m * t);

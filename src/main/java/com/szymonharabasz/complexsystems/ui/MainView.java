@@ -87,7 +87,7 @@ public class MainView extends VerticalLayout {
         trajectoryChart.setHeight(400f,  Unit.PIXELS);
         trajectoryChart.setWidth(400f,  Unit.PIXELS);
         plots.add(new Span(trajectoryChart));
-        totalEnergyChart = new LineChart(0.0, 2.0, "E / E0").build();
+        totalEnergyChart = new LineChart(0, 2.0, "E / E0").build();
         totalEnergyChart.setHeight(400f,  Unit.PIXELS);
         totalEnergyChart.setWidth(400f,  Unit.PIXELS);
         plots.add(new Span(totalEnergyChart));
@@ -112,6 +112,11 @@ public class MainView extends VerticalLayout {
         Double[][] analytic = extractTrend(analyticStream, n, x -> x / a, e -> e / totE);
         Double[][] euler = extractTrend(eulerStream, n, x -> x / a, e -> e / totE);
         Double[][] leapfrog = extractTrend(leapfrogStream, n, x -> x / a, e -> e / totE);
+
+        System.out.println("***");
+        for (var i = 0; i < analytic[0].length; ++i) {
+            System.out.println("" + analytic[0][i] + " " + euler[0][i] + " " + leapfrog[0][i]);
+        }
 
         Double[] xs = harmonicOscillatorService.xs(dt)
             .limit(n)

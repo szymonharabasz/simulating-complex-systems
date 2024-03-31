@@ -65,12 +65,20 @@ public class MainView extends VerticalLayout {
         addClassName("centered-content");
         
         HorizontalLayout oscilatorSettings = new HorizontalLayout();
-        oscilatorSettings.add(makNumberField(x -> dtMilis = x, "Time Step", "ms", 0.1, 20.0, 0.1, dtMilis));
-        oscilatorSettings.add(makNumberField(x -> m = x, "Mass", "kg", 0.1, 10.0, 0.1, m));
-        oscilatorSettings.add(makNumberField(x -> k = x, "Rigidity", "N/m", 0.1, 10.0, 0.1, k));
-        oscilatorSettings.add(makNumberField(x -> x0 = x, "Initial position", "m", -10.0, 10.0, 0.1, x0));
-        oscilatorSettings.add(makNumberField(x -> v0 = x, "Initial velocity", "m/s", -10.0, 10.0, 0.1, v0));
-        oscilatorSettings.add(makNumberField(x -> b = x, "Damping", "2sqrt(mk)", 0.0, 2.0, 0.1, b));
+        oscilatorSettings.add(makeNumberField(x -> dtMilis = x, "Time Step", "ms", 0.1, 20.0, 0.1, dtMilis));
+        oscilatorSettings.add(makeNumberField(x -> m = x, "Mass", "kg", 0.1, 10.0, 0.1, m));
+        oscilatorSettings.add(makeNumberField(x -> k = x, "Rigidity", "N/m", 0.1, 10.0, 0.1, k));
+        oscilatorSettings.add(makeNumberField(x -> x0 = x, "Initial position", "m", -10.0, 10.0, 0.1, x0));
+        oscilatorSettings.add(makeNumberField(x -> v0 = x, "Initial velocity", "m/s", -10.0, 10.0, 0.1, v0));
+        var dampingField = makeNumberField(x -> b = x, "Damping", "2sqrt(mk)", 0.0, 2.0, 0.1, b);
+        dampingField.addValueChangeListener(event -> {
+            if (event.getValue() <= 0.1) {
+                event.getSource().setStep(0.01);
+            } else {
+                event.getSource().setStep(0.1);
+            }
+        });
+        oscilatorSettings.add(dampingField);
         add(oscilatorSettings);
 
         HorizontalLayout plots = new HorizontalLayout();
@@ -141,7 +149,7 @@ public class MainView extends VerticalLayout {
         ));
     }
 
-    private NumberField makNumberField(
+    private NumberField makeNumberField(
         DoubleConsumer fieldSetter, String label, String unit,
         double min, double max, double step, double initValue)
       {

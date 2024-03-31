@@ -17,7 +17,7 @@ public class HarmonicOscillatorService {
         var b2m = oscillator.b2m();
         return xs(dt).map(t -> {
             if (Math.abs(oscillator.b() - 1.0) < SMALL ) {
-                var a1 = 1.;//oscillator.r0();
+                var a1 = 1.;
                 var a2 = (oscillator.v0() + b2m * oscillator.r0())/oscillator.r0();
                 var x = (a1 + a2*t) * Math.exp(-b2m * t);
                 var v = (a2 - b2m * (a1 + a2*t)) * Math.exp(-b2m * t);
@@ -83,4 +83,17 @@ public class HarmonicOscillatorService {
         return Stream.iterate(0.0, t -> t + dt);
     }
 
+    public boolean checkReversability(Double[][] trend, Double[][] reverseTrend) {
+        int length = trend[0].length;
+        for (int i = 0; i < length; ++i) {
+            System.out.println(" i " + i + " " + Math.abs(trend[0][i] - reverseTrend[0][length - i - 1]));
+            if (Math.abs(trend[0][i] - reverseTrend[0][length - i - 1]) > SMALL) {
+                return false;
+            }
+            if (Math.abs(trend[1][i] - reverseTrend[1][length - i - 1]) > SMALL) {
+                return false;
+            }
+        }
+        return true;
+    }
 }

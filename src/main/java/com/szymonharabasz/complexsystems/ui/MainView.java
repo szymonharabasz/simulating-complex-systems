@@ -40,6 +40,8 @@ public class MainView extends VerticalLayout {
     private double b = 0.06;
     private ApexCharts trajectoryChart;
     private ApexCharts totalEnergyChart;
+    private Span eulerReversabilityResult;
+    private Span leapfrogReversabilityResult;
 
     public MainView(HarmonicOscillatorService harmonicOscillatorService) {
         this.harmonicOscillatorService = harmonicOscillatorService;
@@ -93,6 +95,11 @@ public class MainView extends VerticalLayout {
         plots.add(new Span(totalEnergyChart));
         add(plots);
 
+        eulerReversabilityResult = new Span();
+        add(eulerReversabilityResult);
+        leapfrogReversabilityResult = new Span();
+        add(leapfrogReversabilityResult);
+
         updateChartData();
     }
 
@@ -113,7 +120,26 @@ public class MainView extends VerticalLayout {
         Double[][] euler = extractTrend(eulerStream, n, x -> x / a, e -> e / totE);
         Double[][] leapfrog = extractTrend(leapfrogStream, n, x -> x / a, e -> e / totE);
 
-        System.out.println("TOTE " + totE + " A " + a * a);
+        var x0reverseEuler = euler[0][euler[0].length - 1];
+        var v0reverseEuler = -euler[1][euler[1].length - 1];
+        var propsReverseEuler = new HarmonicOscillatorProperties(m, k, b, x0reverseEuler, v0reverseEuler);
+        var reverseEulerStream = harmonicOscillatorService.euler(propsReverseEuler, dt);
+        Double[][] reverseEuler = extractTrend(reverseEulerStream, n, x -> x / propsReverseEuler.amplitude(), e -> e / totE);
+        boolean isEulerReversible = harmonicOscillatorService.checkReversability(euler, reverseEuler);
+
+        var x0reverseLeapfrog = euler[0][euler[0].length - 1];
+        var v0reverseLeapfrog = -euler[1][euler[1].length - 1];
+        var propsReverseLeapfrog = new HarmonicOscillatorProperties(m, k, b, x0reverseLeapfrog, v0reverseLeapfrog);
+        var reverseLeapfrogStream = harmonicOscillatorService.leapfrog(propsReverseLeapfrog, dt);
+        Double[][] reverseLeapfrog = extractTrend(reverseLeapfrogStream, n, x -> x / propsReverseLeapfrog.amplitude(), e -> e / totE);
+        boolean isLeapfrogReversible = harmonicOscillatorService.checkReversability(leapfrog, reverseLeapfrog);
+
+        if (eulerReversabilityResult != null) {
+            eulerReversabilityResult.setText("Euler method is reversible: " + isEulerReversible);
+        }
+        if (leapfrogReversabilityResult != null) {
+            leapfrogReversabilityResult.setText("Leapfrog method is reversible: " + isLeapfrogReversible);
+        }
 
         // System.out.println("***");
         // for (var i = 0; i < analytic[0].length; ++i) {
@@ -129,7 +155,8 @@ public class MainView extends VerticalLayout {
             trajectoryChart.updateSeries(
                 makeSeries(xs, new LabelledData("Analytic", analytic[0])),
                 makeSeries(xs, new LabelledData("Euler", euler[0])),
-                makeSeries(xs, new LabelledData("Leap Frog", leapfrog[0]))
+                makeSeries(xs, new LabelledData("Leap Frog", leapfrog[0])),
+                makeSeries(xs, new LabelledData("Leap Frog reverse", reverseLeapfrog[0]))
             );
         }
 

@@ -6,16 +6,39 @@ import jakarta.enterprise.context.Dependent;
 
 @Dependent
 public class HarmonicOscillatorService {
+
+    private final double small = 1e-6;
+
     public Stream<PhaseSpacePoint> analytic(
         HarmonicOscillatorProperties oscillator, double dt
     ) {
         var a = oscillator.amplitude();
         var omega = oscillator.omega();
         var phi = oscillator.phi();
-        return xs(dt).map(t -> new PhaseSpacePoint(
-                a * Math.cos(omega * t - phi),
-                -omega * a * Math.sin(omega * t - phi), 
-                totalEnergy(oscillator)));
+        var b2m = oscillator.b2m();
+        return xs(dt).map(t -> {
+            if (Math.abs(oscillator.b() - 1.0) < small ) {
+                var a1 = oscillator.r0();
+                var a2 = oscillator.v0() + b2m * oscillator.r0();
+                var x = (a1 + a2*t) * Math.exp(-b2m * t);
+                var v = (a2 - b2m * (a1 + a2*t)) * Math.exp(-b2m * t);
+                return new PhaseSpacePoint(x, v, totalEnergy(oscillator.m(), oscillator.k(), x, v));
+            } else if (oscillator.b() < 1.0) {
+                var x = a * Math.exp(-b2m * t) * Math.cos(omega * t - phi);
+                var v = -a * Math.exp(-b2m * t) * (b2m * Math.cos(omega * t - phi) + omega * Math.sin(omega * t - phi));
+                return new PhaseSpacePoint(x, v, totalEnergy(oscillator.m(), oscillator.k(), x, v));
+            } else {
+                var delta = b2m * b2m - oscillator.k() / oscillator.m();
+                var l1 = -b2m + Math.sqrt(delta);
+                var l2 = -b2m - Math.sqrt(delta);
+                var a1 = 0.5 * (oscillator.r0() + (oscillator.v0() + b2m * oscillator.r0())/Math.sqrt(delta));
+                var a2 = 0.5 * (oscillator.r0() - (oscillator.v0() + b2m * oscillator.r0())/Math.sqrt(delta));
+                var x = a1 * Math.exp(l1 * t) + a2 * Math.exp(l2 * t);
+                var v = l1 * a1 * Math.exp(l1 * t) + l2 * a2 * Math.exp(l2 * t);
+                return new PhaseSpacePoint(x, v, totalEnergy(oscillator.m(), oscillator.k(), x, v));
+
+            }
+        });
     }
 
     public Stream<PhaseSpacePoint> euler(

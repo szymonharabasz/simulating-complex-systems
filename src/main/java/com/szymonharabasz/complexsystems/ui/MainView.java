@@ -37,7 +37,7 @@ public class MainView extends VerticalLayout {
     private double k = 5.0;
     private double x0 = 0.1;
     private double v0 = 0.0;
-    private double b = 1.1;
+    private double b = 0.06;
     private ApexCharts trajectoryChart;
     private ApexCharts totalEnergyChart;
 
@@ -70,7 +70,7 @@ public class MainView extends VerticalLayout {
         oscilatorSettings.add(makeNumberField(x -> k = x, "Rigidity", "N/m", 0.1, 10.0, 0.1, k));
         oscilatorSettings.add(makeNumberField(x -> x0 = x, "Initial position", "m", -10.0, 10.0, 0.1, x0));
         oscilatorSettings.add(makeNumberField(x -> v0 = x, "Initial velocity", "m/s", -10.0, 10.0, 0.1, v0));
-        var dampingField = makeNumberField(x -> b = x, "Damping", "2sqrt(mk)", 0.0, 2.0, 0.1, b);
+        var dampingField = makeNumberField(x -> b = x, "Damping", "2sqrt(mk)", 0.0, 2.0, 0.01, b);
         dampingField.addValueChangeListener(event -> {
             if (event.getValue() <= 0.1) {
                 event.getSource().setStep(0.01);
@@ -84,13 +84,13 @@ public class MainView extends VerticalLayout {
         HorizontalLayout plots = new HorizontalLayout();
         plots.setAlignItems(Alignment.STRETCH);
         trajectoryChart = new LineChart(-2.0, 2.0, "x(t) / T").build();
-        trajectoryChart.setHeight(300f,  Unit.PERCENTAGE);
-        trajectoryChart.setWidth(275f,  Unit.PERCENTAGE);
-        plots.add(trajectoryChart);
+        trajectoryChart.setHeight(400f,  Unit.PIXELS);
+        trajectoryChart.setWidth(400f,  Unit.PIXELS);
+        plots.add(new Span(trajectoryChart));
         totalEnergyChart = new LineChart(0.0, 2.0, "E / E0").build();
-        totalEnergyChart.setHeight(300f,  Unit.PERCENTAGE);
-        totalEnergyChart.setWidth(200f,  Unit.PERCENTAGE);
-        plots.add(totalEnergyChart);
+        totalEnergyChart.setHeight(400f,  Unit.PIXELS);
+        totalEnergyChart.setWidth(400f,  Unit.PIXELS);
+        plots.add(new Span(totalEnergyChart));
         add(plots);
 
         updateChartData();

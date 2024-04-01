@@ -1,6 +1,7 @@
 package com.szymonharabasz.complexsystems.ui;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.function.DoubleConsumer;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
@@ -35,9 +36,9 @@ public class MainView extends VerticalLayout {
     private double dtMilis = 15.0;
     private double m = 0.1;
     private double k = 5.0;
-    private double x0 = 0.1;
-    private double v0 = 0.0;
-    private double b = 0.06;
+    private double x0 = 0.0;
+    private double v0 = -10.0;
+    private double b = 0.0;
     private ApexCharts trajectoryChart;
     private ApexCharts totalEnergyChart;
     private Span eulerReversabilityResult;
@@ -116,22 +117,22 @@ public class MainView extends VerticalLayout {
         var leapfrogStream = harmonicOscillatorService.leapfrog(props, dt);
 
         Double totE = harmonicOscillatorService.totalEnergy(props);
-        Double[][] analytic = extractTrend(analyticStream, n, x -> x, e -> e / (totE / (a*a)));
-        Double[][] euler = extractTrend(eulerStream, n, x -> x / a, e -> e / totE);
-        Double[][] leapfrog = extractTrend(leapfrogStream, n, x -> x / a, e -> e / totE);
+        Double[][] analytic = extractTrend(analyticStream, n, x -> x, e -> e / (totE / (a*a)), false);
+        Double[][] euler = extractTrend(eulerStream, n, x -> x / a, e -> e / totE, false);
+        Double[][] leapfrog = extractTrend(leapfrogStream, n, x -> x / a, e -> e / totE, false);
 
         var x0reverseEuler = euler[0][euler[0].length - 1];
         var v0reverseEuler = -euler[1][euler[1].length - 1];
         var propsReverseEuler = new HarmonicOscillatorProperties(m, k, b, x0reverseEuler, v0reverseEuler);
         var reverseEulerStream = harmonicOscillatorService.euler(propsReverseEuler, dt);
-        Double[][] reverseEuler = extractTrend(reverseEulerStream, n, x -> x / propsReverseEuler.amplitude(), e -> e / totE);
+        Double[][] reverseEuler = extractTrend(reverseEulerStream, n, x -> x / propsReverseEuler.amplitude(), e -> e / totE, true);
         boolean isEulerReversible = harmonicOscillatorService.checkReversability(euler, reverseEuler);
 
         var x0reverseLeapfrog = euler[0][euler[0].length - 1];
         var v0reverseLeapfrog = -euler[1][euler[1].length - 1];
         var propsReverseLeapfrog = new HarmonicOscillatorProperties(m, k, b, x0reverseLeapfrog, v0reverseLeapfrog);
         var reverseLeapfrogStream = harmonicOscillatorService.leapfrog(propsReverseLeapfrog, dt);
-        Double[][] reverseLeapfrog = extractTrend(reverseLeapfrogStream, n, x -> x / propsReverseLeapfrog.amplitude(), e -> e / totE);
+        Double[][] reverseLeapfrog = extractTrend(reverseLeapfrogStream, n, x -> x / propsReverseLeapfrog.amplitude(), e -> e / totE, true);
         boolean isLeapfrogReversible = harmonicOscillatorService.checkReversability(leapfrog, reverseLeapfrog);
 
         if (eulerReversabilityResult != null) {
@@ -171,15 +172,21 @@ public class MainView extends VerticalLayout {
     }
 
     private Double[][] extractTrend(
-        Stream<PhaseSpacePoint> stream, long length, UnaryOperator<Double> scaling1, UnaryOperator<Double> scaling2
+        Stream<PhaseSpacePoint> stream, long length, UnaryOperator<Double> scaling1, UnaryOperator<Double> scaling2, boolean revert
     ) {
         return stream.limit(length).collect(Collectors.teeing(
             Collectors.mapping(PhaseSpacePoint::x, Collectors.mapping(scaling1, Collectors.toList())),
             Collectors.mapping(PhaseSpacePoint::energy, Collectors.mapping(scaling2, Collectors.toList())),
-            (res1, res2) -> new Double[][]{
+            (res1, res2) -> {
+                if (revert) {
+                    Collections.reverse(res1);
+                    Collections.reverse(res2);
+                }
+                return new Double[][]{
                     res1.toArray(Double[]::new),
                     res2.toArray(Double[]::new)
-                }
+                };
+            }
         ));
     }
 

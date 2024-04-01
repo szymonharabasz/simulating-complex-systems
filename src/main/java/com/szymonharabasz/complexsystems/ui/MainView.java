@@ -7,6 +7,9 @@ import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.github.appreciated.apexcharts.ApexCharts;
 import com.github.appreciated.apexcharts.helper.Series;
 import com.szymonharabasz.complexsystems.common.LabelledData;
@@ -43,6 +46,8 @@ public class MainView extends VerticalLayout {
     private ApexCharts totalEnergyChart;
     private Span eulerReversabilityResult;
     private Span leapfrogReversabilityResult;
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(MainView.class);
 
     public MainView(HarmonicOscillatorService harmonicOscillatorService) {
         this.harmonicOscillatorService = harmonicOscillatorService;
@@ -142,10 +147,11 @@ public class MainView extends VerticalLayout {
             leapfrogReversabilityResult.setText("Leapfrog method is reversible: " + isLeapfrogReversible);
         }
 
-        // System.out.println("***");
-        // for (var i = 0; i < analytic[0].length; ++i) {
-        //     System.out.println("" + analytic[0][i] + " " + euler[0][i] + " " + leapfrog[0][i]);
-        // }
+        LOGGER.info("***");
+        for (var i = 0; i < euler[0].length; ++i) {
+            var l = reverseEuler[0].length;
+            LOGGER.info("{} {} {}", euler[0][i], euler[1][i], reverseEuler[0][l - i - 1]);
+        }
 
         Double[] xs = harmonicOscillatorService.xs(dt)
             .limit(n)

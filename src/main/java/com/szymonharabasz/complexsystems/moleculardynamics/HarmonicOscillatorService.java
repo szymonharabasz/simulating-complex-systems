@@ -2,11 +2,15 @@ package com.szymonharabasz.complexsystems.moleculardynamics;
 
 import java.util.stream.Stream;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import jakarta.enterprise.context.Dependent;
 
 @Dependent
 public class HarmonicOscillatorService {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(HarmonicOscillatorService.class);
     private static final double SMALL = 1e-6;
 
     public Stream<PhaseSpacePoint> analytic(
@@ -86,7 +90,7 @@ public class HarmonicOscillatorService {
     public boolean checkReversability(Double[][] trend, Double[][] reverseTrend) {
         int length = trend[0].length;
         for (int i = 0; i < length; ++i) {
-            System.out.println(" i " + i + " " + Math.abs(trend[0][i] - reverseTrend[0][length - i - 1]));
+            LOGGER.info("i = {}, {}", i, Math.abs(trend[0][i] - reverseTrend[0][length - i - 1]));
             if (Math.abs(trend[0][i] - reverseTrend[0][length - i - 1]) > SMALL) {
                 return false;
             }

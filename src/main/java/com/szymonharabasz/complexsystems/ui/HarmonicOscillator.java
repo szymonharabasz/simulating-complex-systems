@@ -21,13 +21,15 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 
 /**
  * The main view contains a button and a click listener.
  */
-@Route("")
-public class MainView extends VerticalLayout {
+@Route(value = "", layout = MainLayout.class)
+@PageTitle("Simulation of Complex Systems | Harmonic Oscillator")
+public class HarmonicOscillator extends VerticalLayout {
 
     transient HarmonicOscillatorService harmonicOscillatorService;
 
@@ -42,9 +44,9 @@ public class MainView extends VerticalLayout {
     private Span eulerReversabilityResult;
     private Span leapfrogReversabilityResult;
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(MainView.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(HarmonicOscillator.class);
 
-    public MainView(HarmonicOscillatorService harmonicOscillatorService) {
+    public HarmonicOscillator(HarmonicOscillatorService harmonicOscillatorService) {
         this.harmonicOscillatorService = harmonicOscillatorService;
 
         // Use TextField for standard text input

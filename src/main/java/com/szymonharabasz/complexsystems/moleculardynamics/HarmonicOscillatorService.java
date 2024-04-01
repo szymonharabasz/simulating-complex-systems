@@ -1,5 +1,9 @@
 package com.szymonharabasz.complexsystems.moleculardynamics;
 
+import java.util.Collections;
+import java.util.function.Function;
+import java.util.function.UnaryOperator;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.slf4j.Logger;
@@ -80,7 +84,7 @@ public class HarmonicOscillatorService {
     }
 
     public double totalEnergy(double m, double k, double x, double v) {
-        return k * x * x / 2 + m * v * v /2;
+        return k * x * x / 2 + m * v * v / 2;
     }
 
     public Stream<Double> xs(double dt) {
@@ -94,10 +98,46 @@ public class HarmonicOscillatorService {
             if (Math.abs(trend[0][i] - reverseTrend[0][i]) > SMALL) {
                 return false;
             }
-            if (Math.abs(trend[1][i] + reverseTrend[1][i]) > SMALL) {
+            if (Math.abs(trend[1][i] - reverseTrend[1][i]) > SMALL) {
                 return false;
             }
         }
         return true;
     }
+
+    public Double[][] extractTrend(
+        Stream<PhaseSpacePoint> stream, long length, UnaryOperator<Double> scaling1, UnaryOperator<Double> scaling2, boolean revert
+    ) {
+        Function<PhaseSpacePoint, Double> extractVelocity = revert ? 
+            p -> -p.v() : 
+            PhaseSpacePoint::v;
+        return stream.limit(length).collect(Collectors.teeing(
+            Collectors.teeing(
+                Collectors.mapping(PhaseSpacePoint::x, Collectors.mapping(scaling1, Collectors.toList())),
+                Collectors.mapping(extractVelocity, Collectors.mapping(scaling1, Collectors.toList())),
+                (res1, res2) -> {
+                    if (revert) {
+                        Collections.reverse(res1);
+                        Collections.reverse(res2);
+                    }
+                    return new Double[][]{
+                        res1.toArray(Double[]::new),
+                        res2.toArray(Double[]::new)
+                    };
+                }
+            ),
+            Collectors.mapping(PhaseSpacePoint::energy, Collectors.mapping(scaling2, Collectors.toList())),
+            (res1and2, res3) -> {
+                if (revert) {
+                    Collections.reverse(res3);
+                }
+                return new Double[][]{
+                    res1and2[0],
+                    res1and2[1],
+                    res3.toArray(Double[]::new)
+                };
+            }
+        ));
+    }
+
 }

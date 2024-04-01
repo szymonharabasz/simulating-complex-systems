@@ -3,6 +3,7 @@ package com.szymonharabasz.complexsystems.moleculardynamics.gasinbox;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import jakarta.enterprise.context.Dependent;
@@ -38,17 +39,18 @@ public class GasInBoxService {
         return 4 * epsilon * ( 12 * Math.pow(sigma/r, 12) / r - 6 * Math.pow(sigma/r, 6) / r);
     }
 
-    public Stream<List<Particle>> leapfrog(int n, int l, double v0, double epsilon, double sigma, double dt) {
-        return Stream.iterate(initialize(n, l, v0, sigma), particles -> propagate(particles, epsilon, sigma, dt));
+    public Stream<List<Particle>> leapfrog(int n, int l, double v0, double m, double epsilon, double sigma, double dt) {
+        return Stream.iterate(initialize(n, l, v0, sigma), particles -> propagate(particles, m, epsilon, sigma, dt));
     }
 
-    List<Particle> propagate(List<Particle> previous, double epsilon, double sigma, double dt) {
+    List<Particle> propagate(List<Particle> previous, double m, double epsilon, double sigma, double dt) {
         var xMid = previous.stream().map(p -> new Particle(
             p.x() + p.vx() * dt / 2,
             p.y() + p.vy() * dt / 2, 
             p.vx(), p.vy())).toList();
         var f = xMid.stream().map(p -> {
-            double fx = 0.0, fy = 0.0;
+            double fx = 0.0;
+            double fy = 0.0;
             for (var other : xMid) {
                 if (other != p) {
                     var dx = other.x() - p.x();
@@ -59,9 +61,16 @@ public class GasInBoxService {
                     fy += forceValue * dy / dist;
                 }
             }
-            return new Pair<fx, fy>();
+            return new Pair<>(fx, fy);
         }).toList();
-        
-        return xMid;
+        var result = IntStream.range(0, Math.min(xMid.size(), f.size()))
+            .mapToObj(i -> {
+                var vx = xMid.get(i).vx() + f.get(i).getA() / m * dt;
+                var vy = xMid.get(i).vy() + f.get(i).getB() / m * dt;
+                var x = xMid.get(i).x() + vx * dt / 2;
+                var y = xMid.get(i).y() + vy * dt / 2;
+                return new Particle(x, y, vx, vy);
+            });
+        return result.toList();
     }
 }

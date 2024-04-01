@@ -126,19 +126,19 @@ public class MainView extends VerticalLayout {
         Double[][] euler = extractTrend(eulerStream, n, x -> x / a, e -> e / totE, false);
         Double[][] leapfrog = extractTrend(leapfrogStream, n, x -> x / a, e -> e / totE, false);
 
-        var x0reverseEuler = euler[0][euler[0].length - 1];
-        var v0reverseEuler = -euler[1][euler[1].length - 1];
+        var x0reverseEuler = a * euler[0][euler[0].length - 1];
+        var v0reverseEuler = -a * euler[1][euler[1].length - 1];
         var propsReverseEuler = new HarmonicOscillatorProperties(m, k, b, x0reverseEuler, v0reverseEuler);
         var reverseEulerStream = harmonicOscillatorService.euler(propsReverseEuler, dt);
         Double[][] reverseEuler = extractTrend(reverseEulerStream, n, x -> x / propsReverseEuler.amplitude(), e -> e / totE, true);
-        boolean isEulerReversible = harmonicOscillatorService.checkReversability(euler, reverseEuler);
+        boolean isEulerReversible = harmonicOscillatorService.checkReversibility(euler, reverseEuler);
 
-        var x0reverseLeapfrog = euler[0][euler[0].length - 1];
-        var v0reverseLeapfrog = -euler[1][euler[1].length - 1];
+        var x0reverseLeapfrog = a * leapfrog[0][leapfrog[0].length - 1];
+        var v0reverseLeapfrog = -a * leapfrog[1][leapfrog[1].length - 1];
         var propsReverseLeapfrog = new HarmonicOscillatorProperties(m, k, b, x0reverseLeapfrog, v0reverseLeapfrog);
         var reverseLeapfrogStream = harmonicOscillatorService.leapfrog(propsReverseLeapfrog, dt);
         Double[][] reverseLeapfrog = extractTrend(reverseLeapfrogStream, n, x -> x / propsReverseLeapfrog.amplitude(), e -> e / totE, true);
-        boolean isLeapfrogReversible = harmonicOscillatorService.checkReversability(leapfrog, reverseLeapfrog);
+        boolean isLeapfrogReversible = harmonicOscillatorService.checkReversibility(leapfrog, reverseLeapfrog);
 
         if (eulerReversabilityResult != null) {
             eulerReversabilityResult.setText("Euler method is reversible: " + isEulerReversible);
@@ -152,6 +152,8 @@ public class MainView extends VerticalLayout {
             var l = reverseEuler[0].length;
             LOGGER.info("{} {} {}", euler[0][i], euler[1][i], reverseEuler[0][l - i - 1]);
         }
+
+        LOGGER.info("a = {}, ar = {}, x0 = {}, v0 = {}", a, propsReverseLeapfrog.amplitude(), x0reverseLeapfrog, v0reverseLeapfrog);
 
         Double[] xs = harmonicOscillatorService.xs(dt)
             .limit(n)
@@ -169,9 +171,9 @@ public class MainView extends VerticalLayout {
 
         if (totalEnergyChart != null) {
             totalEnergyChart.updateSeries(
-                makeSeries(xs, new LabelledData("Analytic", analytic[1])),
-                makeSeries(xs, new LabelledData("Euler", euler[1])),
-                makeSeries(xs, new LabelledData("Leap Frog", leapfrog[1]))
+                makeSeries(xs, new LabelledData("Analytic", analytic[2])),
+                makeSeries(xs, new LabelledData("Euler", euler[2])),
+                makeSeries(xs, new LabelledData("Leap Frog", leapfrog[2]))
             );
         }
 
@@ -181,16 +183,29 @@ public class MainView extends VerticalLayout {
         Stream<PhaseSpacePoint> stream, long length, UnaryOperator<Double> scaling1, UnaryOperator<Double> scaling2, boolean revert
     ) {
         return stream.limit(length).collect(Collectors.teeing(
-            Collectors.mapping(PhaseSpacePoint::x, Collectors.mapping(scaling1, Collectors.toList())),
+            Collectors.teeing(
+                Collectors.mapping(PhaseSpacePoint::x, Collectors.mapping(scaling1, Collectors.toList())),
+                Collectors.mapping(PhaseSpacePoint::v, Collectors.mapping(scaling1, Collectors.toList())),
+                (res1, res2) -> {
+                    if (revert) {
+                        Collections.reverse(res1);
+                        Collections.reverse(res2);
+                    }
+                    return new Double[][]{
+                        res1.toArray(Double[]::new),
+                        res2.toArray(Double[]::new)
+                    };
+                }
+            ),
             Collectors.mapping(PhaseSpacePoint::energy, Collectors.mapping(scaling2, Collectors.toList())),
-            (res1, res2) -> {
+            (res1and2, res3) -> {
                 if (revert) {
-                    Collections.reverse(res1);
-                    Collections.reverse(res2);
+                    Collections.reverse(res3);
                 }
                 return new Double[][]{
-                    res1.toArray(Double[]::new),
-                    res2.toArray(Double[]::new)
+                    res1and2[0],
+                    res1and2[1],
+                    res3.toArray(Double[]::new)
                 };
             }
         ));

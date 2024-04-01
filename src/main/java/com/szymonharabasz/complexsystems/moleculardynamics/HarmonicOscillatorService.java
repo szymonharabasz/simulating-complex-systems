@@ -87,7 +87,7 @@ public class HarmonicOscillatorService {
         return Stream.iterate(0.0, t -> t + dt);
     }
 
-    public boolean checkReversability(Double[][] trend, Double[][] reverseTrend) {
+    public boolean checkReversibility(Double[][] trend, Double[][] reverseTrend) {
         int length = trend[0].length;
         for (int i = 0; i < length; ++i) {
             LOGGER.info("i = {}, {}", i, Math.abs(trend[0][i] - reverseTrend[0][length - i - 1]));

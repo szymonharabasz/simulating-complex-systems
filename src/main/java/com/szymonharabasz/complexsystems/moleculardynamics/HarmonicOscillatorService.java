@@ -89,9 +89,8 @@ public class HarmonicOscillatorService {
 
     public boolean checkReversibility(Double[][] trend, Double[][] reverseTrend) {
         int length = trend[0].length;
-        boolean result = true;
         for (int i = 0; i < length; ++i) {
-            LOGGER.info("i = {}, {} {}, {}", i, Math.abs(trend[0][i] - reverseTrend[0][i]), trend[1][i], reverseTrend[1][i]);
+            LOGGER.debug("i = {}, {} {}, {}", i, Math.abs(trend[0][i] - reverseTrend[0][i]), trend[1][i], reverseTrend[1][i]);
             if (Math.abs(trend[0][i] - reverseTrend[0][i]) > SMALL) {
                 return false;
             }

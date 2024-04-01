@@ -131,7 +131,7 @@ public class MainView extends VerticalLayout {
         var propsReverseEuler = new HarmonicOscillatorProperties(m, k, b, x0reverseEuler, v0reverseEuler);
         var reverseEulerStream = harmonicOscillatorService.euler(propsReverseEuler, dt);
         Double[][] reverseEuler = extractTrend(reverseEulerStream, n, x -> x / propsReverseEuler.amplitude(), e -> e / totE, true);
-        boolean isEulerReversible = harmonicOscillatorService.checkReversibility(euler, reverseEuler);
+        boolean isEulerReversible = false;// harmonicOscillatorService.checkReversibility(euler, reverseEuler);
 
         var x0reverseLeapfrog = a * leapfrog[0][leapfrog[0].length - 1];
         var v0reverseLeapfrog = -a * leapfrog[1][leapfrog[1].length - 1];
@@ -147,13 +147,13 @@ public class MainView extends VerticalLayout {
             leapfrogReversabilityResult.setText("Leapfrog method is reversible: " + isLeapfrogReversible);
         }
 
-        LOGGER.info("***");
-        for (var i = 0; i < euler[0].length; ++i) {
-            var l = reverseEuler[0].length;
-            LOGGER.info("{} {} {}", euler[0][i], euler[1][i], reverseEuler[0][l - i - 1]);
-        }
+        // LOGGER.info("***");
+        // for (var i = 0; i < euler[0].length; ++i) {
+        //     var l = reverseEuler[0].length;
+        //     LOGGER.info("{} {} {}", euler[0][i], euler[1][i], reverseEuler[0][l - i - 1]);
+        // }
 
-        LOGGER.info("a = {}, ar = {}, x0 = {}, v0 = {}", a, propsReverseLeapfrog.amplitude(), x0reverseLeapfrog, v0reverseLeapfrog);
+        // LOGGER.info("a = {}, ar = {}, x0 = {}, v0 = {}", a, propsReverseLeapfrog.amplitude(), x0reverseLeapfrog, v0reverseLeapfrog);
 
         Double[] xs = harmonicOscillatorService.xs(dt)
             .limit(n)

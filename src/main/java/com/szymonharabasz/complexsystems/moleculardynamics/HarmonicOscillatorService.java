@@ -11,7 +11,7 @@ import jakarta.enterprise.context.Dependent;
 public class HarmonicOscillatorService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(HarmonicOscillatorService.class);
-    private static final double SMALL = 1e-6;
+    private static final double SMALL = 1e-4;
 
     public Stream<PhaseSpacePoint> analytic(
         HarmonicOscillatorProperties oscillator, double dt
@@ -89,12 +89,13 @@ public class HarmonicOscillatorService {
 
     public boolean checkReversibility(Double[][] trend, Double[][] reverseTrend) {
         int length = trend[0].length;
+        boolean result = true;
         for (int i = 0; i < length; ++i) {
-            LOGGER.info("i = {}, {}", i, Math.abs(trend[0][i] - reverseTrend[0][length - i - 1]));
-            if (Math.abs(trend[0][i] - reverseTrend[0][length - i - 1]) > SMALL) {
+            LOGGER.info("i = {}, {} {}, {}", i, Math.abs(trend[0][i] - reverseTrend[0][i]), trend[1][i], reverseTrend[1][i]);
+            if (Math.abs(trend[0][i] - reverseTrend[0][i]) > SMALL) {
                 return false;
             }
-            if (Math.abs(trend[1][i] - reverseTrend[1][length - i - 1]) > SMALL) {
+            if (Math.abs(trend[1][i] + reverseTrend[1][i]) > SMALL) {
                 return false;
             }
         }

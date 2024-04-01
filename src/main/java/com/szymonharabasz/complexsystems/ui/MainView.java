@@ -72,12 +72,15 @@ public class MainView extends VerticalLayout {
         // Use custom CSS classes to apply styling. This is defined in shared-styles.css.
         addClassName("centered-content");
         
-        HorizontalLayout oscilatorSettings = new HorizontalLayout();
-        oscilatorSettings.add(makeNumberField(x -> dtMilis = x, "Time Step", "ms", 0.1, 20.0, 0.1, dtMilis));
-        oscilatorSettings.add(makeNumberField(x -> m = x, "Mass", "kg", 0.1, 10.0, 0.1, m));
-        oscilatorSettings.add(makeNumberField(x -> k = x, "Rigidity", "N/m", 0.1, 10.0, 0.1, k));
-        oscilatorSettings.add(makeNumberField(x -> x0 = x, "Initial position", "m", -10.0, 10.0, 0.1, x0));
-        oscilatorSettings.add(makeNumberField(x -> v0 = x, "Initial velocity", "m/s", -10.0, 10.0, 0.1, v0));
+        HorizontalLayout oscilatorSettings1 = new HorizontalLayout();
+        oscilatorSettings1.add(makeNumberField(x -> dtMilis = x, "Time Step", "ms", 0.1, 20.0, 0.1, dtMilis));
+        oscilatorSettings1.add(makeNumberField(x -> m = x, "Mass", "kg", 0.1, 10.0, 0.1, m));
+        oscilatorSettings1.add(makeNumberField(x -> k = x, "Rigidity", "N/m", 0.1, 10.0, 0.1, k));
+        add(oscilatorSettings1);
+  
+        HorizontalLayout oscilatorSettings2 = new HorizontalLayout();
+        oscilatorSettings2.add(makeNumberField(x -> x0 = x, "Initial position", "m", -10.0, 10.0, 0.1, x0));
+        oscilatorSettings2.add(makeNumberField(x -> v0 = x, "Initial velocity", "m/s", -10.0, 10.0, 0.1, v0));
         var dampingField = makeNumberField(x -> b = x, "Damping", "2sqrt(mk)", 0.0, 2.0, 0.01, b);
         dampingField.addValueChangeListener(event -> {
             if (event.getValue() <= 0.1) {
@@ -86,8 +89,8 @@ public class MainView extends VerticalLayout {
                 event.getSource().setStep(0.1);
             }
         });
-        oscilatorSettings.add(dampingField);
-        add(oscilatorSettings);
+        oscilatorSettings2.add(dampingField);
+        add(oscilatorSettings2);
 
         HorizontalLayout plots = new HorizontalLayout();
         plots.setAlignItems(Alignment.STRETCH);

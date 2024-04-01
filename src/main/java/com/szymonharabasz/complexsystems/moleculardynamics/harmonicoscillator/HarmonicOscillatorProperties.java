@@ -1,4 +1,4 @@
-package com.szymonharabasz.complexsystems.moleculardynamics;
+package com.szymonharabasz.complexsystems.moleculardynamics.harmonicoscillator;
 
 public record HarmonicOscillatorProperties(double m, double k, double b, double r0, double v0) {
     public double omega() { return Math.sqrt(k/m - Math.pow(b2m(), 2)); }

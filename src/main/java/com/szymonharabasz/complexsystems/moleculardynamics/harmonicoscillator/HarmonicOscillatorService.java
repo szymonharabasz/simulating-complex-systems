@@ -1,4 +1,4 @@
-package com.szymonharabasz.complexsystems.moleculardynamics;
+package com.szymonharabasz.complexsystems.moleculardynamics.harmonicoscillator;
 
 import java.util.Collections;
 import java.util.function.Function;

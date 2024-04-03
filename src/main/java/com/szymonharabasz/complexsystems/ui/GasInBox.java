@@ -53,17 +53,17 @@ public class GasInBox extends VerticalLayout {
 
         add(span);
 
+        LOGGER.info("Before initializing particles");
         currentParticles = this.gasInBoxService.initialize(100, 100*sigma, 2*v0, sigma);
+        LOGGER.info("After initializing particles");
         particleChart = new ParticleChart(0, size).build();
+        LOGGER.info("After creating chart object");
         particleChart.setSeries(makeSeries("Particles", currentParticles));
+        LOGGER.info("After creating data series");
         add(particleChart);
+        LOGGER.info("After adding chart to view");
 
 
-    }
-
-    private void updateChart(List<Particle> particles) {
-
-        particleChart.updateSeries(makeSeries("Particles", particles));
     }
 
     private Series<Object[]> makeSeries(String label, List<Particle> particles) {
@@ -81,10 +81,8 @@ public class GasInBox extends VerticalLayout {
         super.onAttach(attachEvent);
 
         scheduler.scheduleAtFixedRate(() -> {
-            var newParticles = gasInBoxService.propagate(currentParticles, m, epsilon, sigma, dt, size);
-            updateChart(newParticles);
-            currentParticles = newParticles;
-            var newSeries = makeSeries("Particles", newParticles);
+            currentParticles = gasInBoxService.propagate(currentParticles, m, epsilon, sigma, dt, size);
+            var newSeries = makeSeries("Particles", currentParticles);
 
             getUI().ifPresent(ui -> ui.access(() -> {
                 span.setText("Particle #1:  " + currentParticles.get(1).x() + " " + currentParticles.get(1).y());

@@ -14,7 +14,7 @@ public class GasInBoxService {
 
     private static final Random RANDOM = new Random();
 
-    List<Particle> initialize(int n, int l, double v0, double sigma) {
+    public List<Particle> initialize(int n, double l, double v0, double sigma) {
         List<Particle> particles = new ArrayList<>();
 
         while (particles.size() < n) {
@@ -39,11 +39,11 @@ public class GasInBoxService {
         return 4 * epsilon * ( 12 * Math.pow(sigma/r, 12) / r - 6 * Math.pow(sigma/r, 6) / r);
     }
 
-    public Stream<List<Particle>> leapfrog(int n, int l, double v0, double m, double epsilon, double sigma, double dt) {
-        return Stream.iterate(initialize(n, l, v0, sigma), particles -> propagate(particles, m, epsilon, sigma, dt));
+    public Stream<List<Particle>> leapfrog(int n, double l, double v0, double m, double epsilon, double sigma, double dt) {
+        return Stream.iterate(initialize(n, l, v0, sigma), particles -> propagate(particles, m, epsilon, sigma, dt, l));
     }
 
-    List<Particle> propagate(List<Particle> previous, double m, double epsilon, double sigma, double dt) {
+    public List<Particle> propagate(List<Particle> previous, double m, double epsilon, double sigma, double dt, double l) {
         var xMid = previous.stream().map(p -> new Particle(
             p.x() + p.vx() * dt / 2,
             p.y() + p.vy() * dt / 2, 
@@ -69,8 +69,32 @@ public class GasInBoxService {
                 var vy = xMid.get(i).vy() + f.get(i).getB() / m * dt;
                 var x = xMid.get(i).x() + vx * dt / 2;
                 var y = xMid.get(i).y() + vy * dt / 2;
+                if (checkLowerBoundary(x)) {
+                    x = -x;
+                    vx = -vx;
+                }
+                if (checkUpperBoundary(x, l)) {
+                    x = l - x;
+                    vx = -vx;
+                }
+                if (checkLowerBoundary(y)) {
+                    y = -y;
+                    vy = -vy;
+                }
+                if (checkUpperBoundary(y, l)) {
+                    y = l - y;
+                    vy = -vy;
+                }
+                
                 return new Particle(x, y, vx, vy);
             });
         return result.toList();
+    }
+
+    boolean checkLowerBoundary(double x) {
+        return x < 0;
+    }
+    boolean checkUpperBoundary(double x, double l) {
+        return x > l;
     }
 }

@@ -31,7 +31,7 @@ public class GasInBox extends VerticalLayout {
     private double epsilon = EPSILON0;
     private double m = M0;
     private double v0 = Math.sqrt(2*epsilon / M0);
-    private double dt = 0.01*sigma/v0;
+    private double dt = 0.001*sigma/v0;
     private double size = 100 * SIGMA0;
 
 
@@ -53,17 +53,10 @@ public class GasInBox extends VerticalLayout {
 
         add(span);
 
-        LOGGER.info("Before initializing particles");
         currentParticles = this.gasInBoxService.initialize(100, 100*sigma, 2*v0, sigma);
-        LOGGER.info("After initializing particles");
         particleChart = new ParticleChart(0, size).build();
-        LOGGER.info("After creating chart object");
         particleChart.setSeries(makeSeries("Particles", currentParticles));
-        LOGGER.info("After creating data series");
         add(particleChart);
-        LOGGER.info("After adding chart to view");
-
-
     }
 
     private Series<Object[]> makeSeries(String label, List<Particle> particles) {
@@ -78,19 +71,29 @@ public class GasInBox extends VerticalLayout {
 
     @Override
     protected void onAttach(AttachEvent attachEvent) {
+        LOGGER.info("Component attached");
         super.onAttach(attachEvent);
 
-        scheduler.scheduleAtFixedRate(() -> {
-            currentParticles = gasInBoxService.propagate(currentParticles, m, epsilon, sigma, dt, size);
-            var newSeries = makeSeries("Particles", currentParticles);
+        scheduler.scheduleAtFixedRate(new Runnable() {
+            private int i = 0;
 
-            getUI().ifPresent(ui -> ui.access(() -> {
-                span.setText("Particle #1:  " + currentParticles.get(1).x() + " " + currentParticles.get(1).y());
-                particleChart.setSeries(newSeries);
-                ui.push();
-            }));
-            
-        }, 2, 1, TimeUnit.SECONDS);
+            @Override
+            public void run() {
+                currentParticles = gasInBoxService.propagate(currentParticles, m, epsilon, sigma, dt, size).stream().filter(p ->
+                    Double.isFinite(p.x()) && Double.isFinite(p.y()) && Double.isFinite(p.vx()) && Double.isFinite(p.vy())
+                ).toList();
+                var newSeries = makeSeries("Particles", currentParticles);
+
+                if (i % 10 == 0) {
+                    getUI().ifPresent(ui -> ui.access(() -> {
+                        span.setText("Particle #1:  " + currentParticles.get(1).x() + " " + currentParticles.get(1).y());
+                        particleChart.updateSeries(newSeries);
+                        ui.push();
+                    }));
+                }
+                ++i;
+            }
+        }, 200, 10, TimeUnit.MILLISECONDS);
     }
 
 }

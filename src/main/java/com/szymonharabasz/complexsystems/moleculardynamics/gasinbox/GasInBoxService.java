@@ -6,6 +6,9 @@ import java.util.Random;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import jakarta.enterprise.context.Dependent;
 import oshi.util.tuples.Pair;
 
@@ -13,8 +16,10 @@ import oshi.util.tuples.Pair;
 public class GasInBoxService {
 
     private static final Random RANDOM = new Random();
+    private static final Logger LOGGER = LoggerFactory.getLogger(GasInBoxService.class);
 
     public List<Particle> initialize(int n, double l, double v0, double sigma) {
+        LOGGER.info("Initializing particles");;
         List<Particle> particles = new ArrayList<>();
 
         while (particles.size() < n) {
@@ -57,8 +62,8 @@ public class GasInBoxService {
                     var dy = other.y() - p.y();
                     var dist = Math.hypot(dx, dy);
                     var forceValue = force(epsilon, sigma, dist);
-                    fx += forceValue * dx / dist;
-                    fy += forceValue * dy / dist;
+                    fx += -forceValue * dx / dist;
+                    fy += -forceValue * dy / dist;
                 }
             }
             return new Pair<>(fx, fy);

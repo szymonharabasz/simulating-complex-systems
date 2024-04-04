@@ -13,7 +13,7 @@ import com.github.appreciated.apexcharts.config.stroke.Curve;
 import com.github.appreciated.apexcharts.config.xaxis.XAxisType;
 
 public class ParticleChart extends ApexChartsBuilder {
-    public ParticleChart(double min, double max) {
+    public ParticleChart(double min, double max, double markerSize) {
         withChart(ChartBuilder.get()
                 .withType(Type.SCATTER)
                 .withAnimations(AnimationsBuilder.get()
@@ -44,9 +44,12 @@ public class ParticleChart extends ApexChartsBuilder {
                         .withTickAmount(new BigDecimal(0))
                         .withType(XAxisType.NUMERIC)
                         .build())
+                .withMarkers(MarkersBuilder.get()
+                        .withSize(markerSize, markerSize)
+                        .build())
                 .withYaxis(YAxisBuilder.get()
                         .withMin(min)
-                        .withMax(max)
+                        .withMax(0.9*max)
                         // .withTitle(com.github.appreciated.apexcharts.config.yaxis.builder.TitleBuilder.get()
                         //         .withText(titleY)
                         //         .build())

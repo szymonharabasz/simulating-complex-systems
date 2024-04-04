@@ -19,7 +19,7 @@ public class GasInBoxService {
     private static final Logger LOGGER = LoggerFactory.getLogger(GasInBoxService.class);
 
     public List<Particle> initialize(int n, double l, double v0, double sigma) {
-        LOGGER.info("Initializing particles");;
+        LOGGER.info("Initializing particles");
         List<Particle> particles = new ArrayList<>();
 
         while (particles.size() < n) {

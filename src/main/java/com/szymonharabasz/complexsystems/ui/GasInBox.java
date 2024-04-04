@@ -53,8 +53,8 @@ public class GasInBox extends VerticalLayout {
 
         add(span);
 
-        currentParticles = this.gasInBoxService.initialize(100, 100*sigma, 2*v0, sigma);
-        particleChart = new ParticleChart(0, size).build();
+        currentParticles = this.gasInBoxService.initialize(100, size, 2*v0, sigma);
+        particleChart = new ParticleChart(0, size, 5*sigma).build();
         particleChart.setSeries(makeSeries("Particles", currentParticles));
         add(particleChart);
     }

@@ -40,8 +40,48 @@ public class GasInBoxService {
         return particles;
     }
 
-    double force (double epsilon, double sigma, double r) {
+    double force(double epsilon, double sigma, double r) {
         return 4 * epsilon * ( 12 * Math.pow(sigma/r, 12) / r - 6 * Math.pow(sigma/r, 6) / r);
+    }
+
+    double force(double epsilon, double sigma, Particle particle1, Particle particle2) {
+        return force(epsilon, sigma, dist(particle1, particle2));
+    }
+
+    double potentialEnergy (double epsilon, double sigma, double r) {
+        return 4 * epsilon * ( Math.pow(sigma/r, 12) - Math.pow(sigma/r, 6));
+    }
+
+    double potentialEnergy(double epsilon, double sigma, Particle particle1, Particle particle2) {
+        return potentialEnergy(epsilon, sigma, dist(particle1, particle2));
+    }
+
+    double kineticEnergy(double m, Particle particle) {
+        return m * (Math.pow(particle.vx(), 2) + Math.pow(particle.vy(), 2)) / 2;
+    }
+
+    public double totalPotentialEnergy(double epsilon, double sigma, List<Particle> particles) {
+        double result = 0.0;
+        for (int i = 0; i < particles.size(); ++i) {
+            for (int j = i + 1; j < particles.size(); ++j) {
+                result += potentialEnergy(epsilon, sigma, particles.get(i), particles.get(j));
+            }
+        }
+        return result;
+    }
+
+    public double totalKineticEnergy(double m, List<Particle> particles) {
+        double result = 0.0;
+        for (int i = 0; i < particles.size(); ++i) {
+            result += kineticEnergy(m, particles.get(i));
+        }
+        return result;
+    }
+
+    double dist(Particle particle1, Particle particle2) {
+        var dx = particle1.x() - particle2.x();
+        var dy = particle1.y() - particle2.y();
+        return Math.hypot(dx, dy);
     }
 
     public Stream<List<Particle>> leapfrog(int n, double l, double v0, double m, double epsilon, double sigma, double dt) {
@@ -58,12 +98,12 @@ public class GasInBoxService {
             double fy = 0.0;
             for (var other : xMid) {
                 if (other != p) {
-                    var dx = other.x() - p.x();
-                    var dy = other.y() - p.y();
-                    var dist = Math.hypot(dx, dy);
-                    var forceValue = force(epsilon, sigma, dist);
-                    fx += -forceValue * dx / dist;
-                    fy += -forceValue * dy / dist;
+                    var dx = p.x() - other.x();
+                    var dy = p.y() - other.y();
+                    var dist = dist(p, other);
+                    var forceValue = force(epsilon, sigma, other, p);
+                    fx += forceValue * dx / dist;
+                    fy += forceValue * dy / dist;
                 }
             }
             return new Pair<>(fx, fy);

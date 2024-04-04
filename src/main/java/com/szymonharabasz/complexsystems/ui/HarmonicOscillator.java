@@ -198,7 +198,7 @@ public class HarmonicOscillator extends VerticalLayout {
         return numberField;
     }
 
-    private Series<Object[]> makeSeries(Double[] xs, LabelledData labelledData) {
+    public Series<Object[]> makeSeries(Double[] xs, LabelledData labelledData) {
         var data = new ArrayList<Double[]>();
         for (int i = 0; i < Math.min(xs.length, labelledData.data().length); ++i) {
                 data.add(new Double[] {xs[i], labelledData.data()[i]});

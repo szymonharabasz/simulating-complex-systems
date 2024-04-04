@@ -62,7 +62,7 @@ public class GasInBox extends VerticalLayout {
 
         currentParticles = this.gasInBoxService.initialize(100, size, 2*v0, sigma);
         particleChart = new ParticleChart(0, size, 5*sigma).build();
-        particleChart.setSeries(makeSeries("Particles", currentParticles));
+        particleChart.setSeries(SeriesTools.makeSeries("Particles", currentParticles));
         add(particleChart);
 
         HorizontalLayout plots = new HorizontalLayout();
@@ -82,15 +82,6 @@ public class GasInBox extends VerticalLayout {
         add(plots);
     }
 
-    private Series<Object[]> makeSeries(String label, List<Particle> particles) {
-        var data = new ArrayList<Double[]>();
-        for (var particle : particles) {
-                data.add(new Double[] {particle.x(), particle.y()});
-        }
-        Object[][] arr = data.toArray(Object[][]::new);
-
-        return new Series<>(label, arr);
-    }
 
     @Override
     protected void onAttach(AttachEvent attachEvent) {
@@ -112,7 +103,7 @@ public class GasInBox extends VerticalLayout {
                 kineticEnergy.add(gasInBoxService.totalKineticEnergy(m, currentParticles));
                 potentialEnergy.add(gasInBoxService.totalPotentialEnergy(epsilon, sigma, currentParticles));
                 totalEnergy.add(kineticEnergy.get(kineticEnergy.size()-1) + potentialEnergy.get(potentialEnergy.size()-1));
-                var newSeries = makeSeries("Particles", currentParticles);
+                var newSeries = SeriesTools.makeSeries("Particles", currentParticles);
 
                 if (i % 10 == 0) {
                     getUI().ifPresent(ui -> ui.access(() -> {

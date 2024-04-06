@@ -28,7 +28,7 @@ public class GasInBoxService {
             var theta = RANDOM.nextDouble() * 2 * Math.PI;
             boolean collision = false;
             for (var particle : particles) {
-                if (Math.hypot(x - particle.x(), y - particle.y()) < sigma) {
+                if (Math.hypot(x - particle.x(), y - particle.y()) < 2*sigma) {
                     collision = true;
                     break;
                 }
@@ -85,7 +85,11 @@ public class GasInBoxService {
     }
 
     public Stream<List<Particle>> leapfrog(int n, double l, double v0, double m, double epsilon, double sigma, double dt) {
-        return Stream.iterate(initialize(n, l, v0, sigma), particles -> propagate(particles, m, epsilon, sigma, dt, l));
+        return leapfrog(initialize(n, l, v0, sigma), n, l, v0, m, epsilon, sigma, dt);
+    }
+
+    public Stream<List<Particle>> leapfrog(List<Particle> initialCondition, int n, double l, double v0, double m, double epsilon, double sigma, double dt) {
+        return Stream.iterate(initialCondition, particles -> propagate(particles, m, epsilon, sigma, dt, l));
     }
 
     public List<Particle> propagate(List<Particle> previous, double m, double epsilon, double sigma, double dt, double l) {

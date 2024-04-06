@@ -1,13 +1,11 @@
 package com.szymonharabasz.complexsystems.ui;
 
-import java.util.ArrayList;
 import java.util.function.DoubleConsumer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.appreciated.apexcharts.ApexCharts;
-import com.github.appreciated.apexcharts.helper.Series;
 import com.szymonharabasz.complexsystems.common.LabelledData;
 import com.szymonharabasz.complexsystems.moleculardynamics.harmonicoscillator.HarmonicOscillatorProperties;
 import com.szymonharabasz.complexsystems.moleculardynamics.harmonicoscillator.HarmonicOscillatorService;
@@ -91,11 +89,11 @@ public class HarmonicOscillator extends VerticalLayout {
 
         HorizontalLayout plots = new HorizontalLayout();
         plots.setAlignItems(Alignment.STRETCH);
-        trajectoryChart = new LineChart(-2.0, 2.0, "x(t) / T").build();
+        trajectoryChart = new LineChart(0.0, 4.0, -2.0, 2.0, "t / T", "x(t) / t").build();
         trajectoryChart.setHeight(400f,  Unit.PIXELS);
         trajectoryChart.setWidth(400f,  Unit.PIXELS);
         plots.add(new Span(trajectoryChart));
-        totalEnergyChart = new LineChart(0, 2.0, "E / E0").build();
+        totalEnergyChart = new LineChart(0.0, 4.0, 0, 2.0, "t / T", "E / E0").build();
         totalEnergyChart.setHeight(400f,  Unit.PIXELS);
         totalEnergyChart.setWidth(400f,  Unit.PIXELS);
         plots.add(new Span(totalEnergyChart));
@@ -162,18 +160,18 @@ public class HarmonicOscillator extends VerticalLayout {
 
         if (trajectoryChart != null) {
             trajectoryChart.updateSeries(
-                makeSeries(xs, new LabelledData("Analytic", analytic[0])),
-                makeSeries(xs, new LabelledData("Euler", euler[0])),
-                makeSeries(xs, new LabelledData("Leap Frog", leapfrog[0])),
-                makeSeries(xs, new LabelledData("Leap Frog reverse", reverseLeapfrog[0]))
+                SeriesTools.makeSeries(xs, new LabelledData("Analytic", analytic[0])),
+                SeriesTools.makeSeries(xs, new LabelledData("Euler", euler[0])),
+                SeriesTools.makeSeries(xs, new LabelledData("Leap Frog", leapfrog[0])),
+                SeriesTools.makeSeries(xs, new LabelledData("Leap Frog reverse", reverseLeapfrog[0]))
             );
         }
 
         if (totalEnergyChart != null) {
             totalEnergyChart.updateSeries(
-                makeSeries(xs, new LabelledData("Analytic", analytic[2])),
-                makeSeries(xs, new LabelledData("Euler", euler[2])),
-                makeSeries(xs, new LabelledData("Leap Frog", leapfrog[2]))
+                SeriesTools.makeSeries(xs, new LabelledData("Analytic", analytic[2])),
+                SeriesTools.makeSeries(xs, new LabelledData("Euler", euler[2])),
+                SeriesTools.makeSeries(xs, new LabelledData("Leap Frog", leapfrog[2]))
             );
         }
 

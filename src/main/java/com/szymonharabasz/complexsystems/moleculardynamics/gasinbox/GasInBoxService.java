@@ -50,15 +50,14 @@ public class GasInBoxService {
         return force(epsilon, sigma, dist(particle1, particle2));
     }
 
-    double potentialEnergy (double epsilon, double sigma, double r) {
+    BigDecimal potentialEnergy (double epsilon, double sigma, double r) {
         BigDecimal ratio = BigDecimal.valueOf(sigma).divide(BigDecimal.valueOf(r), RoundingMode.HALF_UP);
         BigDecimal power12 = ratio.pow(12);
         BigDecimal power6 = ratio.pow(6);
-        BigDecimal result = power12.subtract(power6).multiply(BigDecimal.valueOf(4 * epsilon));
-        return result.doubleValue();
+        return power12.subtract(power6).multiply(BigDecimal.valueOf(4 * epsilon));
     }
 
-    double potentialEnergy(double epsilon, double sigma, Particle particle1, Particle particle2) {
+    BigDecimal potentialEnergy(double epsilon, double sigma, Particle particle1, Particle particle2) {
         return potentialEnergy(epsilon, sigma, dist(particle1, particle2));
     }
 
@@ -67,15 +66,18 @@ public class GasInBoxService {
     }
 
     public double totalPotentialEnergy(double epsilon, double sigma, List<Particle> particles) {
-        double result = 0.0;
-        for (int i = 0; i < particles.size(); ++i) {
-            for (int j = 0; j < particles.size(); ++j) {
-                if (i != j) {
-                    result += 0.5 * potentialEnergy(epsilon, sigma, particles.get(i), particles.get(j));
+        var result = BigDecimal.ZERO;
+        //for (int i = 0; i < particles.size(); ++i) {
+        for (int i = 0; i < 1; ++i) {
+                for (int j = 0; j < particles.size(); ++j) {
+                    if (i != j) {
+                        result = result.add(potentialEnergy(epsilon, sigma, particles.get(i), particles.get(j)));
+
+                    }
                 }
-            }
+
         }
-        return result;
+        return result.multiply(BigDecimal.valueOf(0.5)).doubleValue();
     }
 
     public double totalKineticEnergy(double m, List<Particle> particles) {

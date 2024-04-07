@@ -114,7 +114,7 @@ public class GasInBox extends VerticalLayout {
                 var particleSeries = SeriesTools.makeSeries("Particles", currentParticles);
 
                 var currentKineticEnergy = gasInBoxService.totalKineticEnergy(m, currentParticles) / kineticEnergyInit;
-                var currentPotentialEnergy = gasInBoxService.totalPotentialEnergy(epsilon, sigma, currentParticles) / potentialEnergyInit;
+                var currentPotentialEnergy = gasInBoxService.totalPotentialEnergy(epsilon, sigma, currentParticles);
                 var currentTotalEnergy = currentKineticEnergy + currentPotentialEnergy;
 
                 if (i > NSTEPS) {

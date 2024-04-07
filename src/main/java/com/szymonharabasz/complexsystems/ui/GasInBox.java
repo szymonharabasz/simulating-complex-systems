@@ -35,6 +35,7 @@ public class GasInBox extends VerticalLayout {
     private static final double EPSILON0 = 1.0;
     private static final double M0 = 1.0;
     private static final int NSTEPS = 1000;
+    private static final int NPARTICLES = 100;
     private static final String TITLE_X = "t * sigma / v0";
 
     private double sigma = SIGMA0;
@@ -69,7 +70,7 @@ public class GasInBox extends VerticalLayout {
 
         add(span);
 
-        currentParticles = this.gasInBoxService.initialize(100, size, 2*v0, sigma);
+        currentParticles = this.gasInBoxService.initialize(NPARTICLES, size, 2*v0, sigma);
         particleChart = new ParticleChart(0, size, 5*sigma).build();
         particleChart.setSeries(SeriesTools.makeSeries("Particles", currentParticles));
         add(particleChart);
@@ -88,7 +89,7 @@ public class GasInBox extends VerticalLayout {
     protected void onAttach(AttachEvent attachEvent) {
         LOGGER.info("Component attached");
         super.onAttach(attachEvent);
-        List<List<Particle>> history = new ArrayList<>(gasInBoxService.leapfrog(100, size, v0, m, epsilon, sigma, dt).limit(NSTEPS).toList());
+        List<List<Particle>> history = new ArrayList<>(gasInBoxService.leapfrog(currentParticles, size, m, epsilon, sigma, dt).limit(NSTEPS).toList());
         kineticEnergyInit = this.gasInBoxService.totalKineticEnergy(m, history.get(0));
         potentialEnergyInit = this.gasInBoxService.totalPotentialEnergy(epsilon, sigma, history.get(0));
         totalEnergyInit = kineticEnergyInit + potentialEnergyInit;
@@ -114,6 +115,7 @@ public class GasInBox extends VerticalLayout {
 
                 var currentKineticEnergy = gasInBoxService.totalKineticEnergy(m, currentParticles) / kineticEnergyInit;
                 var currentPotentialEnergy = gasInBoxService.totalPotentialEnergy(epsilon, sigma, currentParticles) / potentialEnergyInit;
+                var currentTotalEnergy = currentKineticEnergy + currentPotentialEnergy;
 
                 if (i > NSTEPS) {
                     kineticEnergy.remove(0);
@@ -126,7 +128,7 @@ public class GasInBox extends VerticalLayout {
 
                 if (i % 10 == 0) {
                     getUI().ifPresent(ui -> ui.access(() -> {
-                        span.setText("i: " + i + ", potential energy: " + currentPotentialEnergy + " kinetic energy: " + currentKineticEnergy);
+                        span.setText("i: " + i + ", potential energy: " + currentPotentialEnergy + ", initial" + potentialEnergyInit + ", kinetic; " + currentKineticEnergy);
                         particleChart.updateSeries(particleSeries);
                         energyChart.updateSeries(newKineticEnergySeries, newPpotentialEnergySeries);
                         ui.push();

@@ -1,5 +1,7 @@
 package com.szymonharabasz.complexsystems.moleculardynamics.gasinbox;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -49,7 +51,11 @@ public class GasInBoxService {
     }
 
     double potentialEnergy (double epsilon, double sigma, double r) {
-        return 4 * epsilon * ( Math.pow(sigma/r, 12) - Math.pow(sigma/r, 6));
+        BigDecimal ratio = BigDecimal.valueOf(sigma).divide(BigDecimal.valueOf(r), RoundingMode.HALF_UP);
+        BigDecimal power12 = ratio.pow(12);
+        BigDecimal power6 = ratio.pow(6);
+        BigDecimal result = power12.subtract(power6).multiply(BigDecimal.valueOf(4 * epsilon));
+        return result.doubleValue();
     }
 
     double potentialEnergy(double epsilon, double sigma, Particle particle1, Particle particle2) {
@@ -63,8 +69,10 @@ public class GasInBoxService {
     public double totalPotentialEnergy(double epsilon, double sigma, List<Particle> particles) {
         double result = 0.0;
         for (int i = 0; i < particles.size(); ++i) {
-            for (int j = i + 1; j < particles.size(); ++j) {
-                result += potentialEnergy(epsilon, sigma, particles.get(i), particles.get(j));
+            for (int j = 0; j < particles.size(); ++j) {
+                if (i != j) {
+                    result += 0.5 * potentialEnergy(epsilon, sigma, particles.get(i), particles.get(j));
+                }
             }
         }
         return result;
@@ -85,10 +93,10 @@ public class GasInBoxService {
     }
 
     public Stream<List<Particle>> leapfrog(int n, double l, double v0, double m, double epsilon, double sigma, double dt) {
-        return leapfrog(initialize(n, l, v0, sigma), n, l, v0, m, epsilon, sigma, dt);
+        return leapfrog(initialize(n, l, v0, sigma), l, m, epsilon, sigma, dt);
     }
 
-    public Stream<List<Particle>> leapfrog(List<Particle> initialCondition, int n, double l, double v0, double m, double epsilon, double sigma, double dt) {
+    public Stream<List<Particle>> leapfrog(List<Particle> initialCondition, double l, double m, double epsilon, double sigma, double dt) {
         return Stream.iterate(initialCondition, particles -> propagate(particles, m, epsilon, sigma, dt, l));
     }
 

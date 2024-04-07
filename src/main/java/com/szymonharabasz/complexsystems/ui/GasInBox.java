@@ -105,8 +105,11 @@ public class GasInBox extends VerticalLayout {
             private int i = 0;
             @Override
             public void run() {
-                //currentParticles = history.get(i % NSTEPS);
-                currentParticles = gasInBoxService.propagate(currentParticles, m, epsilon, sigma, dt, size);
+                if (i < NSTEPS) {
+                    currentParticles = history.get(i);
+                } else {
+                    currentParticles = gasInBoxService.propagate(currentParticles, m, epsilon, sigma, dt, size);
+                }
                 var particleSeries = SeriesTools.makeSeries("Particles", currentParticles);
 
                 var currentKineticEnergy = gasInBoxService.totalKineticEnergy(m, currentParticles) / kineticEnergyInit;

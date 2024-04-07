@@ -1,5 +1,6 @@
 package com.szymonharabasz.complexsystems.ui;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
@@ -8,6 +9,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.IntStream;
 
+import com.github.appreciated.apexcharts.config.builder.XAxisBuilder;
+import com.github.appreciated.apexcharts.config.xaxis.XAxisType;
+import com.github.appreciated.apexcharts.config.xaxis.builder.TitleBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,6 +35,7 @@ public class GasInBox extends VerticalLayout {
     private static final double EPSILON0 = 1.0;
     private static final double M0 = 1.0;
     private static final int NSTEPS = 1000;
+    private static final String TITLE_X = "t * sigma / v0";
 
     private double sigma = SIGMA0;
     private double epsilon = EPSILON0;
@@ -71,7 +76,7 @@ public class GasInBox extends VerticalLayout {
 
         HorizontalLayout plots = new HorizontalLayout();
         plots.setAlignItems(Alignment.STRETCH);
-        energyChart = new LineChart(0, dt * NSTEPS * v0 / sigma, -10, 10, "t * sigma / v0", "E / E0").build();
+        energyChart = new LineChart(0, dt * NSTEPS * v0 / sigma, -10, 10, TITLE_X, "E / E0").build();
         energyChart.setHeight(400f,  Unit.PIXELS);
         energyChart.setWidth(400f,  Unit.PIXELS);
         plots.add(new Span(energyChart));
@@ -88,11 +93,11 @@ public class GasInBox extends VerticalLayout {
         potentialEnergyInit = this.gasInBoxService.totalPotentialEnergy(epsilon, sigma, history.get(0));
         totalEnergyInit = kineticEnergyInit + potentialEnergyInit;
 
-        var xs = IntStream.range(0, NSTEPS).boxed().map(i -> i * dt * v0 / sigma).toArray(Double[]::new);
-        var kineticEnergy = history.stream().map(particles -> gasInBoxService.totalKineticEnergy(m, particles) / kineticEnergyInit).limit(NSTEPS).toArray(Double[]::new);
-        var potentialEnergy = history.stream().map(particles -> gasInBoxService.totalPotentialEnergy(epsilon, sigma, particles) / potentialEnergyInit).limit(NSTEPS).toArray(Double[]::new);
-        var kineticEnergySeries = SeriesTools.makeSeries(xs, new LabelledData("Kinetic energy", kineticEnergy));
-        var potentialEnergySeries = SeriesTools.makeSeries(xs, new LabelledData("Potential energy", potentialEnergy));
+        var xs = new ArrayList<Double>(IntStream.range(0, NSTEPS).boxed().map(i -> i * dt * v0 / sigma).toList());
+        var kineticEnergy = new ArrayList<Double>(history.stream().map(particles -> gasInBoxService.totalKineticEnergy(m, particles) / kineticEnergyInit).limit(NSTEPS).toList());
+        var potentialEnergy = new ArrayList<Double>(history.stream().map(particles -> gasInBoxService.totalPotentialEnergy(epsilon, sigma, particles) / potentialEnergyInit).limit(NSTEPS).toList());
+        var kineticEnergySeries = SeriesTools.makeSeries(xs.toArray(Double[]::new), new LabelledData("Kinetic energy", kineticEnergy.toArray(Double[]::new)));
+        var potentialEnergySeries = SeriesTools.makeSeries(xs.toArray(Double[]::new), new LabelledData("Potential energy", potentialEnergy.toArray(Double[]::new)));
 
         energyChart.updateSeries(kineticEnergySeries, potentialEnergySeries);
 
@@ -104,13 +109,23 @@ public class GasInBox extends VerticalLayout {
                 currentParticles = gasInBoxService.propagate(currentParticles, m, epsilon, sigma, dt, size);
                 var particleSeries = SeriesTools.makeSeries("Particles", currentParticles);
 
-                var currentPotentialEnergy = gasInBoxService.totalPotentialEnergy(epsilon, sigma, currentParticles);
+                var currentKineticEnergy = gasInBoxService.totalKineticEnergy(m, currentParticles) / kineticEnergyInit;
+                var currentPotentialEnergy = gasInBoxService.totalPotentialEnergy(epsilon, sigma, currentParticles) / potentialEnergyInit;
+
+                if (i > NSTEPS) {
+                    kineticEnergy.remove(0);
+                    kineticEnergy.add(currentKineticEnergy);
+                    potentialEnergy.remove(0);
+                    potentialEnergy.add(currentPotentialEnergy);
+                }
+                var newKineticEnergySeries = SeriesTools.makeSeries(xs.toArray(Double[]::new), new LabelledData("Kinetic energy", kineticEnergy.toArray(Double[]::new)));
+                var newPpotentialEnergySeries = SeriesTools.makeSeries(xs.toArray(Double[]::new), new LabelledData("Potential energy", potentialEnergy.toArray(Double[]::new)));
 
                 if (i % 10 == 0) {
                     getUI().ifPresent(ui -> ui.access(() -> {
-                        span.setText("i: " + i + ", potential energy: " + currentPotentialEnergy);
+                        span.setText("i: " + i + ", potential energy: " + currentPotentialEnergy + " kinetic energy: " + currentKineticEnergy);
                         particleChart.updateSeries(particleSeries);
-                        energyChart.updateSeries(kineticEnergySeries, potentialEnergySeries);
+                        energyChart.updateSeries(newKineticEnergySeries, newPpotentialEnergySeries);
                         ui.push();
                     }));
                 }

@@ -42,11 +42,14 @@ public class GasInBoxService {
         return particles;
     }
 
-    double force(double epsilon, double sigma, double r) {
-        return 4 * epsilon * ( 12 * Math.pow(sigma/r, 12) / r - 6 * Math.pow(sigma/r, 6) / r);
+    BigDecimal force(double epsilon, double sigma, double r) {
+        BigDecimal ratio = BigDecimal.valueOf(sigma).divide(BigDecimal.valueOf(r), RoundingMode.HALF_UP);
+        BigDecimal power12 = ratio.pow(12).multiply(BigDecimal.valueOf(12 / r));
+        BigDecimal power6 = ratio.pow(6).multiply(BigDecimal.valueOf(6 / r));;
+        return power12.subtract(power6).multiply(BigDecimal.valueOf(4 * epsilon));
     }
 
-    double force(double epsilon, double sigma, Particle particle1, Particle particle2) {
+    BigDecimal force(double epsilon, double sigma, Particle particle1, Particle particle2) {
         return force(epsilon, sigma, dist(particle1, particle2));
     }
 
@@ -115,7 +118,7 @@ public class GasInBoxService {
                     var dx = p.x() - other.x();
                     var dy = p.y() - other.y();
                     var dist = dist(p, other);
-                    var forceValue = force(epsilon, sigma, other, p);
+                    var forceValue = force(epsilon, sigma, other, p).doubleValue();
                     fx += forceValue * dx / dist;
                     fy += forceValue * dy / dist;
                 }
